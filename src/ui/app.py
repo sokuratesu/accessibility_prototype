@@ -106,7 +106,7 @@ class AccessibilityTesterUI:
         # Tools container
         self.tools_container = ft.Container(
             content=ft.Column([
-                ft.Text("Select Testing Tools:", size=16, weight="bold"),
+                ft.Text("Select Testing Tools:", size=16, weight=ft.FontWeight.BOLD),
                 self.axe_checkbox,
                 self.wave_checkbox,
                 self.wave_api_key_input,
@@ -141,7 +141,7 @@ class AccessibilityTesterUI:
         # Japanese controls container
         self.japanese_container = ft.Container(
             content=ft.Column([
-                ft.Text("Japanese Accessibility Options:", size=16, weight="bold"),
+                ft.Text("Japanese Accessibility Options:", size=16, weight=ft.FontWeight.BOLD),
                 self.japanese_checkbox,
                 self.form_zero_checkbox,
                 self.ruby_checkbox,
@@ -180,7 +180,7 @@ class AccessibilityTesterUI:
         # Crawl options container
         self.crawl_container = ft.Container(
             content=ft.Column([
-                ft.Text("Crawling Options:", size=16, weight="bold"),
+                ft.Text("Crawling Options:", size=16, weight=ft.FontWeight.BOLD),
                 self.crawl_checkbox,
                 ft.Row([
                     self.max_pages_input,
@@ -248,7 +248,7 @@ class AccessibilityTesterUI:
 
         self.results_container = ft.Container(
             content=ft.Column([
-                ft.Text("Results:", size=16, weight="bold"),
+                ft.Text("Results:", size=16, weight=ft.FontWeight.BOLD),
                 self.progress_bar,
                 self.status_text,
                 ft.Container(height=10),  # Spacer
@@ -262,24 +262,9 @@ class AccessibilityTesterUI:
         )
 
     def create_page_selection_dialog(self):
-        """Create a dialog for selecting pages to test."""
-
         """Initialize page selection dialog components."""
         self.url_checkboxes = []
-        self.select_all_checkbox = None  # Will be created when needed
-
-        self.url_list_view = ft.ListView(
-            spacing=10,
-            padding=20,
-            auto_scroll=True,
-            height=400
-        )
-
-        self.select_all_checkbox = ft.Checkbox(
-            label="Select All",
-            value=True,
-            on_change=self.toggle_all_urls
-        )
+        self.select_all_checkbox = None
 
     def toggle_all_urls(self, e):
         """Toggle selection state for all URLs."""
@@ -290,7 +275,7 @@ class AccessibilityTesterUI:
     def setup_ui(self):
         """Arrange UI components."""
         self.page.add(
-            ft.Text("Accessibility Tester", size=24, weight="bold"),
+            ft.Text("Accessibility Tester", size=24, weight=ft.FontWeight.BOLD),
             self.url_input,
             self.tools_container,
             self.japanese_checkbox,
@@ -387,22 +372,23 @@ class AccessibilityTesterUI:
         self._execute_tests(urls_to_test, selected_tools)
 
     def show_page_selection_dialog(self, urls, selected_tools):
-        """Show dialog to select which pages to test.
+        """Show dialog to select which pages to test using overlay.
 
         Args:
             urls (list): List of URLs found by crawler
             selected_tools (list): Selected testing tools
         """
-        # Create a new container for the URL list
-        url_list_column = ft.Column(
-            scroll=ft.ScrollMode.AUTO,
-            spacing=10,
-            height=400,
-            width=600
-        )
+        print(f"Showing URL selection with {len(urls)} URLs")
 
         # Reset checkbox list
         self.url_checkboxes = []
+
+        # Create content for URL list
+        url_list = ft.Column(
+            scroll=ft.ScrollMode.AUTO,
+            spacing=10,
+            height=400,
+        )
 
         # Add the "Select All" checkbox
         self.select_all_checkbox = ft.Checkbox(
@@ -410,21 +396,24 @@ class AccessibilityTesterUI:
             value=True,
             on_change=self.toggle_all_urls
         )
-        url_list_column.controls.append(self.select_all_checkbox)
+        url_list.controls.append(self.select_all_checkbox)
+
+        url_list.controls.append(ft.Divider())
 
         # Add a checkbox for each URL
-        for url in urls:
-            # Create a checkbox for the URL
+        for i, url in enumerate(urls):
             url_checkbox = ft.Checkbox(
                 label=url,
                 value=True
             )
             self.url_checkboxes.append(url_checkbox)
-            url_list_column.controls.append(url_checkbox)
+            url_list.controls.append(url_checkbox)
+            print(f"Added URL checkbox {i + 1}: {url[:50]}...")
 
-        # Create buttons for the dialog
+        # Create functions for buttons
         def close_dialog(e):
-            dialog.open = False
+            print("URL selection closed")  # Debug print
+            self.page.overlay.remove(url_selection_overlay)
 
             # Re-enable test button
             self.test_button.disabled = False
@@ -435,8 +424,7 @@ class AccessibilityTesterUI:
             self.page.update()
 
         def start_testing(e):
-            dialog.open = False
-            self.page.update()
+            print("Starting tests with selected URLs")
 
             # Get selected URLs
             selected_urls = [
@@ -444,6 +432,12 @@ class AccessibilityTesterUI:
                 for checkbox in self.url_checkboxes
                 if checkbox.value
             ]
+
+            print(f"Selected {len(selected_urls)} URLs out of {len(urls)} total")
+
+            # Remove the overlay AFTER getting the selected URLs
+            self.page.overlay.remove(url_selection_overlay)
+            self.page.update()
 
             if not selected_urls:
                 self.show_snackbar("No pages selected for testing")
@@ -464,26 +458,41 @@ class AccessibilityTesterUI:
             # Run tests on selected URLs
             self._execute_tests(selected_urls, selected_tools)
 
-        # Create the dialog
-        dialog = ft.AlertDialog(
-            modal=True,  # Make it modal to ensure focus
-            title=ft.Text("Select Pages to Test"),
-            content=ft.Container(
-                content=url_list_column,
-                padding=10,
-                width=600,
-                height=450
+        # Create an overlay with a card for URL selection
+        url_selection_overlay = ft.Container(
+            content=ft.Card(
+                content=ft.Container(
+                    content=ft.Column([
+                        ft.Row([
+                            ft.Text(f"Select Pages to Test ({len(urls)} found)", size=20, weight="bold"),
+                            ft.IconButton(
+                                icon=ft.icons.CLOSE,
+                                on_click=close_dialog
+                            )
+                        ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+
+                        ft.Divider(),
+
+                        url_list,
+
+                        ft.Row([
+                            ft.OutlinedButton(text="Cancel", on_click=close_dialog),
+                            ft.FilledButton(text="Test Selected", on_click=start_testing),
+                        ], alignment=ft.MainAxisAlignment.END)
+                    ]),
+                    padding=20,
+                    width=600,
+                ),
             ),
-            actions=[
-                ft.TextButton("Cancel", on_click=close_dialog),
-                ft.TextButton("Test Selected", on_click=start_testing)
-            ],
-            actions_alignment=ft.MainAxisAlignment.END
+            alignment=ft.alignment.center,
+            width=self.page.width,
+            height=self.page.height,
+            bgcolor=ft.colors.with_opacity(0.75, ft.colors.BLACK),
         )
 
-        # Show the dialog
-        self.page.dialog = dialog
-        dialog.open = True
+        # Add the overlay to the page
+        self.page.overlay.append(url_selection_overlay)
+        print("URL selection overlay added")  # Debug print
         self.page.update()
 
     def _execute_tests(self, urls, selected_tools):
@@ -574,22 +583,7 @@ class AccessibilityTesterUI:
 
     def open_settings(self, e):
         """Open settings dialog."""
-
-        # Create a settings dialog
-        def close_dialog(e):
-            settings_dialog.open = False
-            self.page.update()
-
-        def save_settings(e):
-            # Save settings to config
-            general_settings = self.config_manager.get_general_settings()
-            general_settings["report_dir"] = report_dir_input.value
-            general_settings["screenshot_on_violation"] = screenshot_checkbox.value
-            general_settings["combined_report"] = combined_report_checkbox.value
-
-            self.config_manager.save_config()
-            self.show_snackbar("Settings saved")
-            close_dialog(e)
+        print("Opening settings dialog")  # Debug print
 
         # Get current settings
         general_settings = self.config_manager.get_general_settings()
@@ -611,23 +605,82 @@ class AccessibilityTesterUI:
             value=general_settings.get("combined_report", True)
         )
 
-        settings_dialog = ft.AlertDialog(
-            title=ft.Text("Settings"),
-            content=ft.Column([
-                ft.Text("General Settings", size=16, weight="bold"),
-                report_dir_input,
-                screenshot_checkbox,
-                combined_report_checkbox,
-                ft.Container(height=20)  # Spacer
-            ], tight=True),
-            actions=[
-                ft.TextButton("Cancel", on_click=close_dialog),
-                ft.TextButton("Save", on_click=save_settings),
-            ],
-            actions_alignment=ft.MainAxisAlignment.END,
+        # Create settings overlay container for reference
+        settings_overlay = ft.Container()
+
+        # Create functions for buttons
+        def close_dialog(e):
+            print("Settings dialog closed with Close/Cancel")  # Debug print
+            try:
+                if settings_overlay in self.page.overlay:
+                    self.page.overlay.remove(settings_overlay)
+                    self.page.update()
+                    print("Settings overlay successfully removed")
+                else:
+                    print("Settings overlay not found in page overlays")
+            except Exception as ex:
+                print(f"Error closing settings: {ex}")
+
+        def save_settings(e):
+            print("Saving settings")  # Debug print
+            try:
+                # Save settings to config
+                general_settings = self.config_manager.get_general_settings()
+                general_settings["report_dir"] = report_dir_input.value
+                general_settings["screenshot_on_violation"] = screenshot_checkbox.value
+                general_settings["combined_report"] = combined_report_checkbox.value
+
+                self.config_manager.save_config()
+                self.show_snackbar("Settings saved")
+
+                # Remove the overlay
+                if settings_overlay in self.page.overlay:
+                    self.page.overlay.remove(settings_overlay)
+                    self.page.update()
+                    print("Settings overlay removed after save")
+                else:
+                    print("Settings overlay not found after save")
+            except Exception as ex:
+                print(f"Error saving settings: {ex}")
+
+        # Create an overlay with a card for settings
+        settings_overlay = ft.Container(
+            content=ft.Card(
+                content=ft.Container(
+                    content=ft.Column([
+                        ft.Row([
+                            ft.Text("Settings", size=20, weight="bold"),
+                            ft.IconButton(
+                                icon=ft.icons.CLOSE,
+                                on_click=close_dialog
+                            )
+                        ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+
+                        ft.Divider(),
+
+                        ft.Text("General Settings", size=16, weight="bold"),
+                        report_dir_input,
+                        screenshot_checkbox,
+                        combined_report_checkbox,
+
+                        ft.Container(height=20),  # Spacer
+
+                        ft.Row([
+                            ft.OutlinedButton(text="Cancel", on_click=close_dialog),
+                            ft.FilledButton(text="Save", on_click=save_settings),
+                        ], alignment=ft.MainAxisAlignment.END)
+                    ]),
+                    padding=20,
+                    width=400,
+                ),
+            ),
+            alignment=ft.alignment.center,
+            width=self.page.width,
+            height=self.page.height,
+            bgcolor=ft.colors.with_opacity(0.75, ft.colors.BLACK),
         )
 
-        # Show the dialog
-        self.page.dialog = settings_dialog
-        settings_dialog.open = True
+        # Add the overlay to the page
+        self.page.overlay.append(settings_overlay)
+        print("Settings overlay added")  # Debug print
         self.page.update()
