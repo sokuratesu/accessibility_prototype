@@ -5,14 +5,34 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="92bae063-f94c-4c97-be3e-66f9e235b1ed" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/accessibility_prototype.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/accessibility_config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/japanese_config.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/data/wcag_checklist.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/config/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/config/config_manager.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/core/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/core/base_tester.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/core/japanese_issue.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/core/test_orchestrator.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/testers/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/testers/axe_tester.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/testers/htmlcs_tester.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/testers/japanese_tester.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/testers/lighthouse_tester.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/testers/pa11y_tester.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/testers/wave_tester.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/ui/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/ui/app.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/utils/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/utils/crawler.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/utils/report_generators.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/accessibility_config.json" beforeDir="false" afterPath="$PROJECT_DIR$/accessibility_config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -50,6 +70,9 @@
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src" />
     </key>
   </component>
   <component name="SharedIndexes">
