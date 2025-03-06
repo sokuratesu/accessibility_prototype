@@ -1,0 +1,28 @@
+{
+    "tools": {
+        "axe": {
+            "enabled": true,
+            "browser": "chrome"
+        },
+        "wave": {
+            "enabled": true,
+            "api_key": "Z0FBQUFBQm55Uml6cFVIMmV4RjYtZUxDNlNiWThwWnV2Yl9LMDRwa2FfN0lkeTluMl8wTlB4V21nbXZJYmZQcDFnTERXWGgwM1l4ZG1waXlqdlNMLUd3bjFobTVuWFZ6MEE9PQ=="
+        },
+        "lighthouse": {
+            "enabled": false
+        },
+        "pa11y": {
+            "enabled": false
+        },
+        "htmlcs": {
+            "enabled": false,
+            "browser": "chrome"
+        }
+    },
+    "general": {
+        "report_dir": "Reports",
+        "max_pages": 10,
+        "screenshot_on_violation": true,
+        "combined_report": true
+    }
+}
