@@ -129,14 +129,136 @@ def generate_html_report(results, template_str=None):
                             {% if results.incomplete %}
                                 <div class="category warning">
                                     <h3>Incomplete ({{ results.incomplete|length }})</h3>
-                                    <!-- Similar to violations -->
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Tool</th>
+                                                <th>Type</th>
+                                                <th>ID</th>
+                                                <th>Page URL</th>
+                                                <th>WCAG Rule</th>
+                                                <th>Description</th>
+                                                <th>Severity</th>
+                                                <th>Suggested Fix</th>
+                                                <th>Help Link</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for incomplete in results.incomplete %}
+                                                <tr>
+                                                    <td>{{ results.tool }}</td>
+                                                    <td>incomplete</td>
+                                                    <td>{{ incomplete.id }}</td>
+                                                    <td>{{ results.url }}</td>
+                                                    <td>{{ incomplete.tags|join(', ') }}</td>
+                                                    <td>{{ incomplete.description }}</td>
+                                                    <td>{{ incomplete.impact }}</td>
+                                                    <td>{{ incomplete.help }}</td>
+                                                    <td><a href="{{ incomplete.helpUrl }}" target="_blank">Help</a></td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="9">
+                                                        <div class="node-details">
+                                                            <span class="node-summary" onclick="toggleNodeDetails('incomplete-node-{{ loop.index }}')">Details</span>
+                                                            <div id="incomplete-node-{{ loop.index }}" class="node-content">
+                                                                <table>
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>Failure Summary</th>
+                                                                            <th>Impact</th>
+                                                                            <th>Target</th>
+                                                                            <th>HTML</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {% for node in incomplete.nodes %}
+                                                                            <tr>
+                                                                                <td>{{ node.failureSummary|default('N/A') }}</td>
+                                                                                <td>{{ node.impact|default('N/A') }}</td>
+                                                                                <td>
+                                                                                    {{ node.target|join(', ') }}
+                                                                                    <button onclick="highlightElement('{{ node.target[0] }}', '{{ results.url }}')">Highlight</button>
+                                                                                </td>
+                                                                                <td><code>{{ node.html }}</code></td>
+                                                                            </tr>
+                                                                        {% endfor %}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
                                 </div>
                             {% endif %}
 
                             {% if results.passes %}
                                 <div class="category success">
                                     <h3>Passes ({{ results.passes|length }})</h3>
-                                    <!-- List of passes -->
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Tool</th>
+                                                <th>Type</th>
+                                                <th>ID</th>
+                                                <th>Page URL</th>
+                                                <th>WCAG Rule</th>
+                                                <th>Description</th>
+                                                <th>Severity</th>
+                                                <th>Suggested Fix</th>
+                                                <th>Help Link</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for pass in results.passes %}
+                                                <tr>
+                                                    <td>{{ results.tool }}</td>
+                                                    <td>passes</td>
+                                                    <td>{{ pass.id }}</td>
+                                                    <td>{{ results.url }}</td>
+                                                    <td>{{ pass.tags|join(', ') }}</td>
+                                                    <td>{{ pass.description }}</td>
+                                                    <td>{{ pass.impact }}</td>
+                                                    <td>{{ pass.help }}</td>
+                                                    <td><a href="{{ pass.helpUrl }}" target="_blank">Help</a></td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="9">
+                                                        <div class="node-details">
+                                                            <span class="node-summary" onclick="toggleNodeDetails('passes-node-{{ loop.index }}')">Details</span>
+                                                            <div id="passes-node-{{ loop.index }}" class="node-content">
+                                                                <table>
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>Failure Summary</th>
+                                                                            <th>Impact</th>
+                                                                            <th>Target</th>
+                                                                            <th>HTML</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {% for node in pass.nodes %}
+                                                                            <tr>
+                                                                                <td>{{ node.failureSummary|default('N/A') }}</td>
+                                                                                <td>{{ node.impact|default('N/A') }}</td>
+                                                                                <td>
+                                                                                    {{ node.target|join(', ') }}
+                                                                                    <button onclick="highlightElement('{{ node.target[0] }}', '{{ results.url }}')">Highlight</button>
+                                                                                </td>
+                                                                                <td><code>{{ node.html }}</code></td>
+                                                                            </tr>
+                                                                        {% endfor %}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
                                 </div>
                             {% endif %}
                         {% elif results.tool == "wave" %}
