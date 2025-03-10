@@ -14,101 +14,182 @@ def generate_html_report(results, template_str=None):
     """Generate HTML report from test results."""
     if template_str is None:
         template_str = """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Accessibility Test Report</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 20px; }
-                .error { color: red; }
-                .warning { color: orange; }
-                .success { color: green; }
-                table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                th { background-color: #f2f2f2; }
-                .summary { background-color: #f8f8f8; padding: 15px; margin-bottom: 20px; }
-                h1, h2, h3 { color: #333; }
-                .category { margin-top: 30px; }
-                pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
-                .issue-item { margin-bottom: 10px; border-left: 3px solid #ddd; padding-left: 10px; }
-            </style>
-        </head>
-        <body>
-            <h1>Accessibility Test Report</h1>
-            <div class="summary">
-                <h2>Summary</h2>
-                <p><strong>URL:</strong> {{ results.url }}</p>
-                <p><strong>Tool:</strong> {{ results.tool }}</p>
-                <p><strong>Date:</strong> {{ results.timestamp }}</p>
-            </div>
-
-            {% if results.error %}
-                <div class="error">
-                    <h2>Error</h2>
-                    <p>{{ results.error }}</p>
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Accessibility Test Report</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    .error { color: red; }
+                    .warning { color: orange; }
+                    .success { color: green; }
+                    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                    th { background-color: #f2f2f2; }
+                    .summary { background-color: #f8f8f8; padding: 15px; margin-bottom: 20px; }
+                    h1, h2, h3 { color: #333; }
+                    .category { margin-top: 30px; }
+                    pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+                    .issue-item { margin-bottom: 10px; border-left: 3px solid #ddd; padding-left: 10px; }
+                    .filter { margin-bottom: 20px; }
+                    .node-details { margin-top: 10px; }
+                    .node-summary { cursor: pointer; color: blue; text-decoration: underline; }
+                    .node-content { display: none; }
+                </style>
+            </head>
+            <body>
+                <h1>Accessibility Test Report</h1>
+                <div class="summary">
+                    <h2>Summary</h2>
+                    <p><strong>URL:</strong> {{ results.url }}</p>
+                    <p><strong>Tool:</strong> {{ results.tool }}</p>
+                    <p><strong>Date:</strong> {{ results.timestamp }}</p>
                 </div>
-            {% else %}
-                <div class="results-content">
-                    <h2>Results</h2>
-                    {% if results.tool == "axe-core" %}
-                        <!-- Axe-specific reporting -->
-                        {% if results.violations %}
-                            <div class="category error">
-                                <h3>Violations ({{ results.violations|length }})</h3>
-                                {% for violation in results.violations %}
-                                    <div class="issue-item">
-                                        <h4>{{ violation.id }}: {{ violation.help }}</h4>
-                                        <p>Impact: <strong>{{ violation.impact }}</strong></p>
-                                        <p>{{ violation.description }}</p>
-                                        <p>WCAG: {{ violation.tags|join(', ') }}</p>
-                                        <details>
-                                            <summary>Affected Elements ({{ violation.nodes|length }})</summary>
-                                            <ul>
-                                                {% for node in violation.nodes %}
-                                                    <li>
-                                                        <code>{{ node.html }}</code>
-                                                        {% if node.target %}
-                                                            <p>Selector: {{ node.target|join(', ') }}</p>
-                                                        {% endif %}
-                                                    </li>
-                                                {% endfor %}
-                                            </ul>
-                                        </details>
-                                    </div>
-                                {% endfor %}
-                            </div>
+
+                {% if results.error %}
+                    <div class="error">
+                        <h2>Error</h2>
+                        <p>{{ results.error }}</p>
+                    </div>
+                {% else %}
+                    <div class="results-content">
+                        <h2>Results</h2>
+                        {% if results.tool == "axe-core" %}
+                            <!-- Axe-specific reporting -->
+                            {% if results.violations %}
+                                <div class="category error">
+                                    <h3>Violations ({{ results.violations|length }})</h3>
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Tool</th>
+                                                <th>Type</th>
+                                                <th>ID</th>
+                                                <th>Page URL</th>
+                                                <th>WCAG Rule</th>
+                                                <th>Description</th>
+                                                <th>Severity</th>
+                                                <th>Suggested Fix</th>
+                                                <th>Help Link</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for violation in results.violations %}
+                                                <tr>
+                                                    <td>{{ results.tool }}</td>
+                                                    <td>violations</td>
+                                                    <td>{{ violation.id }}</td>
+                                                    <td>{{ results.url }}</td>
+                                                    <td>{{ violation.tags|join(', ') }}</td>
+                                                    <td>{{ violation.description }}</td>
+                                                    <td>{{ violation.impact }}</td>
+                                                    <td>{{ violation.help }}</td>
+                                                    <td><a href="{{ violation.helpUrl }}" target="_blank">Help</a></td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="9">
+                                                        <div class="node-details">
+                                                            <span class="node-summary" onclick="toggleNodeDetails('node-{{ loop.index }}')">Details</span>
+                                                            <div id="node-{{ loop.index }}" class="node-content">
+                                                                <table>
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>Failure Summary</th>
+                                                                            <th>Impact</th>
+                                                                            <th>Target</th>
+                                                                            <th>HTML</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {% for node in violation.nodes %}
+                                                                            <tr>
+                                                                                <td>{{ node.failureSummary|default('N/A') }}</td>
+                                                                                <td>{{ node.impact|default('N/A') }}</td>
+                                                                                <td>
+                                                                                    {{ node.target|join(', ') }}
+                                                                                    <button onclick="highlightElement('{{ node.target[0] }}', '{{ results.url }}')">Highlight</button>
+                                                                                </td>
+                                                                                <td><code>{{ node.html }}</code></td>
+                                                                            </tr>
+                                                                        {% endfor %}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="success">No violations found.</p>
+                            {% endif %}
+
+                            {% if results.incomplete %}
+                                <div class="category warning">
+                                    <h3>Incomplete ({{ results.incomplete|length }})</h3>
+                                    <!-- Similar to violations -->
+                                </div>
+                            {% endif %}
+
+                            {% if results.passes %}
+                                <div class="category success">
+                                    <h3>Passes ({{ results.passes|length }})</h3>
+                                    <!-- List of passes -->
+                                </div>
+                            {% endif %}
+                        {% elif results.tool == "wave" %}
+                            <!-- WAVE-specific reporting -->
+                            <!-- WAVE implementation from the WaveAccessibilityTester -->
+                        {% elif results.tool == "japanese_a11y" %}
+                            <!-- Japanese-specific reporting -->
+                            <!-- Content from JapaneseAccessibilityTester -->
                         {% else %}
-                            <p class="success">No violations found.</p>
+                            <!-- Generic reporting -->
+                            <pre>{{ results|tojson(indent=2) }}</pre>
                         {% endif %}
+                    </div>
+                {% endif %}
 
-                        {% if results.incomplete %}
-                            <div class="category warning">
-                                <h3>Incomplete ({{ results.incomplete|length }})</h3>
-                                <!-- Similar to violations -->
-                            </div>
-                        {% endif %}
+                <script>
+                    function toggleNodeDetails(nodeId) {
+                        try {
+                            const nodeContent = document.getElementById(nodeId);
+                            if (nodeContent.style.display === "none") {
+                                nodeContent.style.display = "block";
+                            } else {
+                                nodeContent.style.display = "none";
+                            }
+                        } catch (error) {
+                            console.error("Error toggling node details:", error);
+                        }
+                    }
 
-                        {% if results.passes %}
-                            <div class="category success">
-                                <h3>Passes ({{ results.passes|length }})</h3>
-                                <!-- List of passes -->
-                            </div>
-                        {% endif %}
-                    {% elif results.tool == "wave" %}
-                        <!-- WAVE-specific reporting -->
-                        <!-- WAVE implementation from the WaveAccessibilityTester -->
-                    {% elif results.tool == "japanese_a11y" %}
-                        <!-- Japanese-specific reporting -->
-                        <!-- Content from JapaneseAccessibilityTester -->
-                    {% else %}
-                        <!-- Generic reporting -->
-                        <pre>{{ results|tojson(indent=2) }}</pre>
-                    {% endif %}
-                </div>
-            {% endif %}
-        </body>
-        </html>
-        """
+                    function highlightElement(selector, url) {
+                        try {
+                            const highlightScript = \`
+                                (function() {
+                                    const element = document.querySelector("\${selector}");
+                                    if (element) {
+                                        element.scrollIntoView({ behavior: "smooth", block: "center" });
+                                        element.style.border = "2px solid red";
+                                        element.style.backgroundColor = "yellow";
+                                    }
+                                })();
+                            \`;
+                            const newWindow = window.open(url, '_blank');
+                            newWindow.onload = function() {
+                                newWindow.eval(highlightScript);
+                            };
+                        } catch (error) {
+                            console.error("Error highlighting element:", error);
+                        }
+                    }
+                </script>
+            </body>
+            </html>
+            """
 
     return Template(template_str).render(results=results)
 
