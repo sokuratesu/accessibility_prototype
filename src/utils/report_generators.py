@@ -10,7 +10,6 @@ from jinja2 import Template
 import pandas as pd
 from openpyxl import Workbook
 
-
 def generate_html_report(results, template_str=None):
     """Generate HTML report from test results."""
     if template_str is None:
@@ -100,7 +99,7 @@ def generate_html_report(results, template_str=None):
                         <!-- WAVE implementation from the WaveAccessibilityTester -->
                     {% elif results.tool == "japanese_a11y" %}
                         <!-- Japanese-specific reporting -->
-                        <!-- Content from JapaneseAccessibilityTester-->
+                        <!-- Content from JapaneseAccessibilityTester -->
                     {% else %}
                         <!-- Generic reporting -->
                         <pre>{{ results|tojson(indent=2) }}</pre>
