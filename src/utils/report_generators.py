@@ -15,30 +15,66 @@ def generate_html_report(results, template_str=None):
     if template_str is None:
         template_str = """
             <!DOCTYPE html>
-            <html>
+            <html lang="es_ES">
             <head>
                 <title>Accessibility Test Report</title>
                 <style>
-                    body { font-family: Arial, sans-serif; margin: 20px; }
-                    .error { color: red; }
-                    .warning { color: orange; }
-                    .success { color: green; }
-                    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+                    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f9f9f9; color: #333; }
+                    header { background-color: #4CAF50; color: white; padding: 10px 0; text-align: center; }
+                    h1, h2, h3 { color: #4CAF50; }
+                    .summary { background-color: #ffffff; padding: 15px; margin-bottom: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+                    .category { margin-top: 30px; }
+                    table { border-collapse: collapse; width: 100%; margin-top: 20px; background-color: #ffffff; }
                     th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
                     th { background-color: #f2f2f2; }
-                    .summary { background-color: #f8f8f8; padding: 15px; margin-bottom: 20px; }
-                    h1, h2, h3 { color: #333; }
-                    .category { margin-top: 30px; }
+                    .error { color: #d32f2f; }
+                    .warning { color: #ff9800; }
+                    .success { color: #388e3c; }
+                    .highlight { border: 2px solid red; }
                     pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
                     .issue-item { margin-bottom: 10px; border-left: 3px solid #ddd; padding-left: 10px; }
-                    .filter { margin-bottom: 20px; }
                     .node-details { margin-top: 10px; }
                     .node-summary { cursor: pointer; color: blue; text-decoration: underline; }
                     .node-content { display: none; }
+                    .footer { text-align: center; margin-top: 20px; font-size: 0.9em; color: #777; }
                 </style>
+                <script>
+                    function toggleNodeDetails(id) {
+                        var element = document.getElementById(id);
+                        if (element.style.display === "none") {
+                            element.style.display = "block";
+                        } else {
+                            element.style.display = "none";
+                        }
+                    }
+
+                    function highlightAccessibilityIssues() {
+                        var iframe = document.getElementById('targetFrame');
+                        var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+
+                        // Example: Highlight all images without alt attribute
+                        var images = iframeDoc.querySelectorAll('img:not([alt])');
+                        images.forEach(function(img) {
+                            img.classList.add('highlight');
+                        });
+
+                        // Example: Highlight all links without href attribute
+                        var links = iframeDoc.querySelectorAll('a:not([href])');
+                        links.forEach(function(link) {
+                            link.classList.add('highlight');
+                        });
+                    }
+
+                    function loadPage() {
+                        var url = document.getElementById('urlInput').value;
+                        document.getElementById('targetFrame').src = url;
+                    }
+                </script>
             </head>
             <body>
-                <h1>Accessibility Test Report</h1>
+                <header>
+                    <h1>Accessibility Test Report</h1>
+                </header>
                 <div class="summary">
                     <h2>Summary</h2>
                     <p><strong>URL:</strong> {{ results.url }}</p>
@@ -52,6 +88,13 @@ def generate_html_report(results, template_str=None):
                         <p>{{ results.error }}</p>
                     </div>
                 {% else %}
+                    <div>
+                        <label for="urlInput">Enter URL: </label>
+                        <input type="text" id="urlInput" placeholder="https://www.example.com" />
+                        <button onclick="loadPage()">Load Page</button>
+                    </div>
+                    <iframe id="targetFrame" src="{{ results.url }}"></iframe>
+                    <button onclick="highlightAccessibilityIssues()">Highlight Issues</button>
                     <div class="results-content">
                         <h2>Results</h2>
                         {% if results.tool == "axe-core" %}
@@ -107,9 +150,9 @@ def generate_html_report(results, template_str=None):
                                                                                 <td>{{ node.impact|default('N/A') }}</td>
                                                                                 <td>
                                                                                     {{ node.target|join(', ') }}
-                                                                                    <button onclick="highlightElement('{{ node.target[0] }}', '{{ results.url }}')">Highlight</button>
+                                                                                    <button onclick="highlightElement('{{ node.target[0] }}')">Highlight</button>
                                                                                 </td>
-                                                                                <td><code>{{ node.html }}</code></td>
+                                                                                <td><code>{{ node.html|e }}</code></td>
                                                                             </tr>
                                                                         {% endfor %}
                                                                     </tbody>
@@ -177,9 +220,9 @@ def generate_html_report(results, template_str=None):
                                                                                 <td>{{ node.impact|default('N/A') }}</td>
                                                                                 <td>
                                                                                     {{ node.target|join(', ') }}
-                                                                                    <button onclick="highlightElement('{{ node.target[0] }}', '{{ results.url }}')">Highlight</button>
+                                                                                    <button onclick="highlightElement('{{ node.target[0] }}')">Highlight</button>
                                                                                 </td>
-                                                                                <td><code>{{ node.html }}</code></td>
+                                                                                <td><code>{{ node.html|e }}</code></td>
                                                                             </tr>
                                                                         {% endfor %}
                                                                     </tbody>
@@ -245,9 +288,9 @@ def generate_html_report(results, template_str=None):
                                                                                 <td>{{ node.impact|default('N/A') }}</td>
                                                                                 <td>
                                                                                     {{ node.target|join(', ') }}
-                                                                                    <button onclick="highlightElement('{{ node.target[0] }}', '{{ results.url }}')">Highlight</button>
+                                                                                    <button onclick="highlightElement('{{ node.target[0] }}')">Highlight</button>
                                                                                 </td>
-                                                                                <td><code>{{ node.html }}</code></td>
+                                                                                <td><code>{{ node.html|e }}</code></td>
                                                                             </tr>
                                                                         {% endfor %}
                                                                     </tbody>
@@ -273,42 +316,9 @@ def generate_html_report(results, template_str=None):
                         {% endif %}
                     </div>
                 {% endif %}
-
-                <script>
-                    function toggleNodeDetails(nodeId) {
-                        try {
-                            const nodeContent = document.getElementById(nodeId);
-                            if (nodeContent.style.display === "none") {
-                                nodeContent.style.display = "block";
-                            } else {
-                                nodeContent.style.display = "none";
-                            }
-                        } catch (error) {
-                            console.error("Error toggling node details:", error);
-                        }
-                    }
-
-                    function highlightElement(selector, url) {
-                        try {
-                            const highlightScript = \`
-                                (function() {
-                                    const element = document.querySelector("\${selector}");
-                                    if (element) {
-                                        element.scrollIntoView({ behavior: "smooth", block: "center" });
-                                        element.style.border = "2px solid red";
-                                        element.style.backgroundColor = "yellow";
-                                    }
-                                })();
-                            \`;
-                            const newWindow = window.open(url, '_blank');
-                            newWindow.onload = function() {
-                                newWindow.eval(highlightScript);
-                            };
-                        } catch (error) {
-                            console.error("Error highlighting element:", error);
-                        }
-                    }
-                </script>
+                <div class="footer">
+                    <p>Accessibility Report generated on {{ results.timestamp }}</p>
+                </div>
             </body>
             </html>
             """

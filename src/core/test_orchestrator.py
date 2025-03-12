@@ -50,7 +50,7 @@ class AccessibilityTestOrchestrator:
         }
         self.logger.info("Japanese testing configured")
 
-    def run_tests(self, url, tester_ids=None, test_dir=None):
+    def run_tests(self, url, tester_ids=None, test_dir=None, w3c_subtests=None):
         """Run accessibility tests.
 
         Args:
@@ -97,7 +97,19 @@ class AccessibilityTestOrchestrator:
                 # Run the test
                 self.logger.info(f"Running {tester_id} on {url}")
                 start_time = time.time()
-                test_result = tester.test_accessibility(url, test_dir)
+
+                # test_result = tester.test_accessibility(url, test_dir)
+                # Special handling for W3C tester with sub-tests
+                if tester_id == "w3c_tools" and w3c_subtests is not None:
+                    test_result = tester.test_accessibility(
+                        url,
+                        test_dir,
+                        enabled_tests=w3c_subtests
+                    )
+                else:
+                    # Run other testers normally
+                    test_result = tester.test_accessibility(url, test_dir)
+
                 duration = time.time() - start_time
                 self.logger.info(f"Completed {tester_id} in {duration:.2f} seconds")
 

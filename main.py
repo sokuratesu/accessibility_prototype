@@ -17,6 +17,8 @@ from src.testers.lighthouse_tester import LighthouseAccessibilityTester
 from src.testers.pa11y_tester import Pa11yAccessibilityTester
 from src.testers.htmlcs_tester import HTMLCSAccessibilityTester
 from src.ui.app import AccessibilityTesterUI
+from src.testers.w3c_tester import W3CTester
+from src.testers.wcag22_tester import WCAG22Tester
 
 
 def setup_logging():
@@ -63,6 +65,14 @@ def initialize_testers(orchestrator, config_manager):
     # Initialize HTML CodeSniffer tester
     htmlcs_tester = HTMLCSAccessibilityTester()
     orchestrator.register_tester("htmlcs", htmlcs_tester)
+
+    # Initialize W3C tester
+    w3c_tester = W3CTester()
+    orchestrator.register_tester("w3c_tools", w3c_tester)
+
+    # Initialize WCAG 2.2 tester
+    wcag22_tester = WCAG22Tester()
+    orchestrator.register_tester("wcag22", wcag22_tester)
 
     return orchestrator
 

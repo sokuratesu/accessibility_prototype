@@ -5,8 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="92bae063-f94c-4c97-be3e-66f9e235b1ed" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/src/core/accessibility_tester.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/testers/w3c_tester.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/testers/wcag22_tester.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/json_sample/axe_chrome_www.sony.es__20250310_163412.html" beforeDir="false" afterPath="$PROJECT_DIR$/json_sample/axe_chrome_www.sony.es__20250310_163412.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/core/test_orchestrator.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/core/test_orchestrator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ui/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ui/app.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/utils/report_generators.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils/report_generators.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -35,6 +40,7 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "Python.accessibility_tester.executor": "Debug",
     "Python.app.executor": "Debug",
     "Python.config.executor": "Debug",
     "Python.main.executor": "Debug",
@@ -42,11 +48,12 @@
     "Python.wcag_checklist.executor": "Debug",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "git-widget-placeholder": "main",
-    "last_opened_file_path": "/Users/socratesmejia/development/accessibility_prototype/json_sample"
+    "last_opened_file_path": "/Users/socratesmejia/development/accessibility_prototype/src/core"
   }
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/core" />
       <recent name="$PROJECT_DIR$/json_sample" />
       <recent name="$PROJECT_DIR$" />
     </key>
@@ -97,5 +104,31 @@
       <updated>1741231529377</updated>
     </task>
     <servers />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/core/accessibility_tester.py</url>
+          <line>77</line>
+          <option name="timeStamp" value="4" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/testers/w3c_tester.py</url>
+          <line>769</line>
+          <option name="timeStamp" value="5" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/testers/w3c_tester.py</url>
+          <line>786</line>
+          <option name="timeStamp" value="6" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src/testers/w3c_tester.py</url>
+          <line>760</line>
+          <option name="timeStamp" value="7" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

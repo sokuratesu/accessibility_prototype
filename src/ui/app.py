@@ -86,6 +86,7 @@ class AccessibilityTesterUI:
         self.lighthouse_checkbox = ft.Checkbox(label="Lighthouse")
         self.pa11y_checkbox = ft.Checkbox(label="Pa11y")
         self.htmlcs_checkbox = ft.Checkbox(label="HTML CodeSniffer")
+        self.wcag22_checkbox = ft.Checkbox(label="WCAG 2.2 Custom Tests")
 
         # API Key input for WAVE
         self.wave_api_key_input = TextField(
@@ -103,6 +104,76 @@ class AccessibilityTesterUI:
 
         self.wave_checkbox.on_change = wave_checkbox_changed
 
+        # W3C Tools main checkbox
+        self.w3c_checkbox = ft.Checkbox(label="W3C Accessibility Tools", value=False)
+
+        # W3C sub-test checkboxes
+        self.w3c_html_validator_checkbox = ft.Checkbox(
+            label="HTML Validator",
+            value=True,
+            visible=False
+        )
+        self.w3c_css_validator_checkbox = ft.Checkbox(
+            label="CSS Validator",
+            value=True,
+            visible=False
+        )
+        self.w3c_link_checker_checkbox = ft.Checkbox(
+            label="Link Checker",
+            value=True,
+            visible=False
+        )
+        self.w3c_nu_validator_checkbox = ft.Checkbox(
+            label="Nu HTML Checker (requires Java)",
+            value=False,
+            visible=False
+        )
+        self.w3c_aria_validator_checkbox = ft.Checkbox(
+            label="ARIA Validator",
+            value=True,
+            visible=False
+        )
+        self.w3c_dom_validator_checkbox = ft.Checkbox(
+            label="DOM Accessibility",
+            value=True,
+            visible=False
+        )
+
+        # Container for W3C sub-tests
+        self.w3c_subtests_container = ft.Container(
+            content=ft.Column([
+                ft.Text("Select W3C Tests:", size=14, italic=True),
+                self.w3c_html_validator_checkbox,
+                self.w3c_css_validator_checkbox,
+                self.w3c_link_checker_checkbox,
+                self.w3c_nu_validator_checkbox,
+                self.w3c_aria_validator_checkbox,
+                self.w3c_dom_validator_checkbox,
+            ]),
+            padding=ft.padding.only(left=30, top=5, bottom=5),
+            visible=False
+        )
+
+        # Toggle W3C sub-tests visibility when the main checkbox changes
+        def w3c_checkbox_changed(e):
+            # self.w3c_subtests_container.visible = self.w3c_checkbox.value
+            # self.page.update()
+            # Update container visibility
+            self.w3c_subtests_container.visible = self.w3c_checkbox.value
+
+            # Also update individual checkbox visibility
+            self.w3c_html_validator_checkbox.visible = self.w3c_checkbox.value
+            self.w3c_css_validator_checkbox.visible = self.w3c_checkbox.value
+            self.w3c_link_checker_checkbox.visible = self.w3c_checkbox.value
+            self.w3c_nu_validator_checkbox.visible = self.w3c_checkbox.value
+            self.w3c_aria_validator_checkbox.visible = self.w3c_checkbox.value
+            self.w3c_dom_validator_checkbox.visible = self.w3c_checkbox.value
+
+            # Make sure to update the page
+            self.page.update()
+
+        self.w3c_checkbox.on_change = w3c_checkbox_changed
+
         # Tools container
         self.tools_container = ft.Container(
             content=ft.Column([
@@ -113,6 +184,9 @@ class AccessibilityTesterUI:
                 self.lighthouse_checkbox,
                 self.pa11y_checkbox,
                 self.htmlcs_checkbox,
+                self.w3c_checkbox,
+                self.w3c_subtests_container,  # Add the sub-tests container here
+                self.wcag22_checkbox,
             ]),
             padding=10,
             border=ft.border.all(1, ft.colors.GREY_400),
@@ -293,6 +367,32 @@ class AccessibilityTesterUI:
         """
         self.orchestrator = orchestrator
 
+    def update_w3c_subtests(self):
+        """Update the W3C tester with the currently selected sub-tests."""
+        if not self.w3c_checkbox.value:
+            return
+
+        # Collect enabled sub-tests
+        w3c_subtests = []
+
+        if hasattr(self, 'w3c_html_validator_checkbox') and self.w3c_html_validator_checkbox.value:
+            w3c_subtests.append("html_validator")
+        if hasattr(self, 'w3c_css_validator_checkbox') and self.w3c_css_validator_checkbox.value:
+            w3c_subtests.append("css_validator")
+        if hasattr(self, 'w3c_link_checker_checkbox') and self.w3c_link_checker_checkbox.value:
+            w3c_subtests.append("link_checker")
+        if hasattr(self, 'w3c_nu_validator_checkbox') and self.w3c_nu_validator_checkbox.value:
+            w3c_subtests.append("nu_validator")
+        if hasattr(self, 'w3c_aria_validator_checkbox') and self.w3c_aria_validator_checkbox.value:
+            w3c_subtests.append("aria_validator")
+        if hasattr(self, 'w3c_dom_validator_checkbox') and self.w3c_dom_validator_checkbox.value:
+            w3c_subtests.append("dom_accessibility")
+
+        # Get the W3C tester from the orchestrator and set its enabled tests
+        if self.orchestrator and "w3c_tools" in self.orchestrator.testers:
+            w3c_tester = self.orchestrator.testers["w3c_tools"]
+            w3c_tester.enabled_tests = w3c_subtests
+
     def run_tests(self, e):
         """Run accessibility tests."""
         # Validate input
@@ -310,6 +410,28 @@ class AccessibilityTesterUI:
         selected_tools = []
         if self.axe_checkbox.value:
             selected_tools.append("axe")
+
+        # For W3C tools, collect the enabled sub-tests
+        w3c_enabled_subtests = None
+        if self.w3c_checkbox.value:
+            w3c_enabled_subtests = []
+            if self.w3c_html_validator_checkbox.value:
+                w3c_enabled_subtests.append("html_validator")
+            if self.w3c_css_validator_checkbox.value:
+                w3c_enabled_subtests.append("css_validator")
+            if self.w3c_link_checker_checkbox.value:
+                w3c_enabled_subtests.append("link_checker")
+            if self.w3c_nu_validator_checkbox.value:
+                w3c_enabled_subtests.append("nu_validator")
+            if self.w3c_aria_validator_checkbox.value:
+                w3c_enabled_subtests.append("aria_validator")
+            if self.w3c_dom_validator_checkbox.value:
+                w3c_enabled_subtests.append("dom_accessibility")
+
+            # Store the enabled sub-tests for use during testing
+            self.w3c_enabled_subtests = w3c_enabled_subtests
+            selected_tools.append("w3c_tools")
+
         if self.wave_checkbox.value:
             if not self.wave_api_key_input.value:
                 self.show_snackbar("Please enter a WAVE API key")
@@ -325,6 +447,13 @@ class AccessibilityTesterUI:
             selected_tools.append("htmlcs")
         if self.japanese_checkbox.value:
             selected_tools.append("japanese_a11y")
+        # For W3C tools, collect the enabled sub-tests
+        # if self.w3c_checkbox.value:
+        #     self.update_w3c_subtests()  # Call the method here
+        #     selected_tools.append("w3c_tools")
+
+        if self.wcag22_checkbox.value:
+            selected_tools.append("wcag22")
 
         if not selected_tools:
             self.show_snackbar("Please select at least one testing tool")
@@ -526,7 +655,11 @@ class AccessibilityTesterUI:
                     self.last_report_dir = os.path.dirname(os.path.dirname(first_tool.get("test_dir", "")))
             else:
                 # Run single test
-                results = self.orchestrator.run_tests(urls[0], selected_tools)
+                results = self.orchestrator.run_tests(
+                    urls[0],
+                    selected_tools,
+                    w3c_subtests=self.w3c_enabled_subtests if hasattr(self, 'w3c_enabled_subtests') else None
+                )
 
                 # Store the report directory for the "Open Reports" button
                 if results and next(iter(results.values())):
