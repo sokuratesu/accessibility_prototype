@@ -656,7 +656,7 @@ class AccessibilityTesterUI:
             os.makedirs(main_test_dir, exist_ok=True)
 
             all_results ={
-                "timestamp": timestamp,
+                "timestamp": datetime.now().strftime("%Y/%m/%d %H:%M:%S"),
                 "tools": selected_tools,
                 "pages": {},
             }

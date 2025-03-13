@@ -1,0 +1,42 @@
+{% extends "accessibility-template.html" %}
+{%- macro axe_description(result) %}
+    {{ result["help"] }}
+    {%- if result["nodes"]|length > 0 %}
+        <br><b>Affected Elements</b>
+        {%- for node in result["nodes"] %}
+        <br> {{ node["html"] }}
+        {%- endfor %}
+    {%- endif %}
+{%- endmacro %}
+{%- block body %}
+    <h1 class="center">Axe Accessibility Report for {{ results.url }}</h1>
+    {{ issue_container("Axe", [
+        {"class": "success", "name": "Passes", "count": results["passes"]|length },
+        {"class": "failure", "name": "Violations", "count": results["violations"]|length },
+        {"class": "incomplete", "name": "Incomplete", "count": results["incomplete"]|length },
+        {"class": "inapplicable", "name": "Inapplicable", "count": results["inapplicable"]|length }
+    ])}}
+    <div class="issues-container">
+        <div class="issues-filter-container filter-container">
+            <button class="filter-btn active" onclick="filterSelection(this, 'all')"> Show all </button>
+            <button class="filter-btn" onclick="filterSelection(this, 'passed')"> Success </button>
+            <button class="filter-btn" onclick="filterSelection(this, 'failed')"> Failure </button>
+            <button class="filter-btn" onclick="filterSelection(this, 'incomplete')"> Incomplete </button>
+            <button class="filter-btn" onclick="filterSelection(this, 'inapplicable')"> Inapplicable </button>
+        </div>
+        <div class="issue-card-container">
+            {%- for result in results["passes"] %}
+                {{ issue_card("Passed", result["description"], axe_description(result), result["wcag_tags"], result["tags"]) }}
+            {%- endfor %}
+            {%- for result in results["violations"] %}
+                {{ issue_card("Failed", result["description"], axe_description(result), result["wcag_tags"], result["tags"]) }}
+            {%- endfor %}
+            {%- for result in results["incomplete"] %}
+                {{ issue_card("Incomplete", result["description"], axe_description(result), result["wcag_tags"], result["tags"]) }}
+            {%- endfor %}
+            {%- for result in results["inapplicable"] %}
+                {{ issue_card("Inapplicable", result["description"], axe_description(result), result["wcag_tags"], result["tags"]) }}
+            {%- endfor %}
+        </div>
+    </div>
+{%- endblock %}

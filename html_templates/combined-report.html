@@ -32,6 +32,16 @@
                     {"class": "incomplete", "name": "Incomplete", "count": results["incomplete"]|length },
                     {"class": "inapplicable", "name": "Inapplicable", "count": results["inapplicable"]|length }
                 ], "filterable " + tool) }}
+            {% elif tool == 'wave' %}
+                {{ issue_container_with_class("Axe", [
+                    {"class": "success", "name": "Features", "count": results["features"]|length },
+                    {"class": "failure", "name": "Errors", "count": results["errors"]|length },
+                    {"class": "incomplete", "name": "Alerts", "count": results["alerts"]|length }
+                ], "filterable " + tool) }}
+            {% elif tool == 'japanese_a11y' %}
+                {{ issue_container_with_class("Axe", [
+                    {"class": "failure", "name": "Errors", "count": results["summary"]["total_issues"]|length }
+                ], "filterable " + tool) }}
             {% endif %}
         {%- endfor %}
     </div>

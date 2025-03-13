@@ -150,6 +150,27 @@
     </div>
     {%- endmacro %}
     {%- macro issue_container(container_name, issues) %}{{ issue_container_with_class(container_name, issues, "") }}{% endmacro%}
+
+    {%- macro issue_card(result, title, description, wcag_tags, tags) %}
+    <div class="issue-card filterable {{ result.lower() }}">
+        <div class="issue-header collapsible">
+            <span class="result-type-badge {{ result.lower() }}">{{ result }}</span>
+            <strong>{{ title }}</strong>
+        </div>
+        <div class="issue-content">
+            <p>{{ description }}</p>
+        </div>
+        <div class="issue-tags">
+            {%- for tag in wcag_tags %}
+            <span class="wcag-tag">{{ tag }}</span>
+            {%- endfor %}
+            {%- for tag in tags %}
+            <span class="tag">{{ tag }}</span>
+            {%- endfor %}
+        </div>
+    </div>
+    {%- endmacro %}
+
     {%- block body %}{% endblock %}
 
     <script>
