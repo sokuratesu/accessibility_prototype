@@ -82,7 +82,7 @@ class AccessibilityTestOrchestrator:
             return {}
 
         # Run each tester
-        results = {}
+        results = {"tools": {}}
         for tester_id in tester_ids:
             try:
                 self.logger.info(f"Running {tester_id} on {url}")
@@ -123,12 +123,12 @@ class AccessibilityTestOrchestrator:
                     test_result["reports"] = report_paths
 
                 # Store results
-                results[tester_id] = test_result
+                results["tools"][tester_id] = test_result
 
             except Exception as e:
                 error_message = f"Error running {tester_id}: {str(e)}"
                 self.logger.error(error_message)
-                results[tester_id] = {
+                results["tools"][tester_id] = {
                     "tool": tester_id,
                     "url": url,
                     "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
@@ -136,95 +136,10 @@ class AccessibilityTestOrchestrator:
                     "test_dir": test_dir
                 }
 
-        # Generate combined and summary reports
-        self._generate_combined_reports(results, test_dir)
-
         # Save all results
         all_results_path = os.path.join(test_dir, "all_results.json")
         with open(all_results_path, 'w', encoding='utf-8') as f:
             json.dump(results, f, indent=2)
 
         return results
-
-    def _generate_combined_reports(self, results, test_dir):
-        """Generate combined reports from all tester results.
-
-        Args:
-            results (dict): Results from all testers
-            test_dir (str): Directory to save reports
-        """
-        try:
-            # Create combined report generator
-            combined_generator = CombinedReportGenerator(test_dir)
-
-            # Generate combined report
-            combined_path = combined_generator.generate_combined_report({
-                results.get("url", "unknown_url"): results
-            })
-
-            # Generate summary report
-            summary_path = generate_summary_report({
-                results.get("url", "unknown_url"): results
-            }, test_dir)
-
-            self.logger.info(f"Generated combined reports in {test_dir}")
-            return {
-                "combined": combined_path,
-                "summary": summary_path
-            }
-
-        except Exception as e:
-            self.logger.error(f"Error generating combined reports: {str(e)}")
-            return None
-
-    def batch_test_urls(self, urls, tester_ids=None):
-        """Run tests on multiple URLs.
-
-        Args:
-            urls (list): List of URLs to test
-            tester_ids (list, optional): List of tester IDs to use
-
-        Returns:
-            dict: Results for each URL
-        """
-        # Create a main test directory
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        base_dir = os.path.join(os.getcwd(), "reports")
-        test_id = f"batch_{timestamp}_{uuid.uuid4().hex[:8]}"
-        main_test_dir = os.path.join(base_dir, test_id)
-        os.makedirs(main_test_dir, exist_ok=True)
-
-        # Run tests for each URL
-        all_results = {}
-        for i, url in enumerate(urls):
-            self.logger.info(f"Testing URL {i + 1}/{len(urls)}: {url}")
-
-            # Create a subdirectory for this URL
-            url_safe_name = url.replace('https://', '').replace('http://', '').replace('/', '_').replace(':', '_')
-            if len(url_safe_name) > 50:  # Truncate if too long
-                url_safe_name = url_safe_name[:50]
-            url_dir = os.path.join(main_test_dir, f"{i + 1}_{url_safe_name}")
-
-            # Run the tests
-            results = self.run_tests(url, tester_ids, url_dir)
-            all_results[url] = results
-
-        # Generate overall summary
-        self.logger.info("Generating batch summary report")
-        summary_path = generate_summary_report(all_results, main_test_dir)
-
-        # Save all results
-        all_results_path = os.path.join(main_test_dir, "all_urls_results.json")
-        with open(all_results_path, 'w', encoding='utf-8') as f:
-            json.dump({url: {t: r for t, r in results.items() if "reports" not in t}
-                       for url, results in all_results.items()}, f, indent=2)
-
-        self.logger.info(f"Batch testing complete. Summary: {summary_path}")
-
-        # Add the test directory to results for UI to access
-        for url in all_results:
-            for tool in all_results[url]:
-                all_results[url][tool]["test_dir"] = main_test_dir
-
-        return all_results
 

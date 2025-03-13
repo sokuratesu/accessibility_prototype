@@ -4,12 +4,16 @@ Provides a graphical user interface using Flet.
 """
 
 import os
+import uuid
+from datetime import datetime
+
 import flet as ft
 import subprocess
 import platform
 from flet import Page, TextField, ElevatedButton, Text, ProgressBar, Column, SnackBar
 import logging
 
+from utils.report_generators import generate_summary_report
 from ..core.test_orchestrator import AccessibilityTestOrchestrator
 from ..config.config_manager import ConfigManager
 from ..utils.crawler import WebsiteCrawler
@@ -645,26 +649,33 @@ class AccessibilityTesterUI:
         self.page.update()
 
         try:
-            # Run batch test
-            if len(urls) > 1:
-                all_results = self.orchestrator.batch_test_urls(urls, selected_tools)
-                # Get the main test directory from the results
-                if all_results and next(iter(all_results.values())):
-                    first_result = next(iter(all_results.values()))
-                    first_tool = next(iter(first_result.values()))
-                    self.last_report_dir = os.path.dirname(os.path.dirname(first_tool.get("test_dir", "")))
-            else:
-                # Run single test
-                results = self.orchestrator.run_tests(
-                    urls[0],
+            base_dir = os.path.join(os.getcwd(), "Reports")
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            test_id = f"report_{timestamp}_{uuid.uuid4().hex[:8]}"
+            main_test_dir = os.path.join(base_dir, test_id)
+            os.makedirs(main_test_dir, exist_ok=True)
+
+            all_results ={
+                "timestamp": timestamp,
+                "tools": selected_tools,
+                "pages": {},
+            }
+            for url in urls:
+                url_dir = os.path.join(main_test_dir, url
+                                       .replace('https://', '')
+                                       .replace('http://', '')
+                                       .replace('/', '_')
+                                       .replace(':', '_'))
+                os.makedirs(url_dir, exist_ok=True)
+                all_results["pages"][url] = self.orchestrator.run_tests(
+                    url,
                     selected_tools,
+                    test_dir=url_dir,
                     w3c_subtests=self.w3c_enabled_subtests if hasattr(self, 'w3c_enabled_subtests') else None
                 )
 
-                # Store the report directory for the "Open Reports" button
-                if results and next(iter(results.values())):
-                    first_tool = next(iter(results.values()))
-                    self.last_report_dir = first_tool.get("test_dir", "")
+            summary_path = generate_summary_report(all_results, main_test_dir)
+            self.logger.info(f"Saved Summary Report to '{summary_path}'")
 
             # Display completion message
             self.status_text.value = "Testing complete"

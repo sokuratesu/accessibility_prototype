@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <style>
+        :root {
+            --color-primary: #2563eb;
+            --color-primary-hover: #9dbbfd;
+
+            --color-accents: #e2e8f0;
+            --color-background: #f8fafc;
+            --color-text: #1e293b;
+            --color-success: #16a34a;
+            --color-incomplete: #f59e0b;
+            --color-failure: #dc2626;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--color-text);
+            background: var(--color-background);
+            padding: 2rem;
+        }
+
+        .container {
+            margin: 0.5rem 15% 2rem 15%;
+            padding: 2rem;
+            border: 2px solid var(--color-accents);
+            border-radius: 20px;
+            background-color: white;
+        }
+        .container.collapsible:hover {
+            background-color: #eaecf4;
+            border-color: #b4bbcf;
+        }
+
+        .collapsible:hover { cursor: pointer; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 0 1rem;
+        }
+        .stat-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+        .stat-card.success { border-left: 4px solid var(--color-success); }
+        .stat-card.failure { border-left: 4px solid var(--color-failure); }
+        .stat-card.incomplete { border-left: 4px solid var(--color-incomplete); }
+        .stat-card.inapplicable { border-left: 4px solid var(--color-primary); }
+
+        .center { text-align: center; }
+
+        .result-type-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-right: 0.5rem;
+        }
+
+        .result-type-badge.passed { background: #dcfce7; color: #15803d; }
+        .result-type-badge.failed { background: #fee2e2; color: #dc2626; }
+        .result-type-badge.incomplete { background: #fef3c7; color: #d97706; }
+        .result-type-badge.inapplicable { background: #e0e7ff; color: #4f46e5; }
+
+        .issues-container {
+            margin: 0 20% 0 20%;
+        }
+        .issue-card {
+            display: none;
+            background: white;
+            padding: 1rem;
+            margin: 0.5rem;
+            border-radius: 6px;
+            border: 1px solid var(--color-accents);
+        }
+        .issue-content {
+            background-color: var(--color-accents);
+            padding: 1rem;
+            border-radius: 6px;
+            display: none;
+        }
+        .issue-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+
+        .issue-tags { margin-top: 0.5rem; }
+        .wcag-tag, .tag {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+        .wcag-tag {
+            background: #818cf8;
+            color: white;
+        }
+        .tag {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+        }
+        .filter-btn:hover { background-color: #ddd; }
+        .filter-btn.active {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    {%- macro issue_container_with_class(container_name, issues, class) %}
+    <div class="container {{ class }}">
+        <section class="summary">
+            <h2>{{ container_name }}</h2>
+            <div class="stats-grid">
+                {%- for issue in issues %}
+                <div class="stat-card {{ issue.class }}">
+                    <h3>{{ issue.name }}</h3>
+                    <p class="stat-number">{{ issue.count }}</p>
+                </div>
+                {%- endfor %}
+            </div>
+        </section>
+    </div>
+    {%- endmacro %}
+    {%- macro issue_container(container_name, issues) %}{{ issue_container_with_class(container_name, issues, "") }}{% endmacro%}
+    {%- block body %}{% endblock %}
+
+    <script>
+        function filterSelection(btn, filter) {
+            let btnContainer = btn.parentElement;
+            let cards = btnContainer.parentElement.getElementsByClassName("filterable");
+            if (filter === "all") filter = "";
+            for (let i = 0; i < cards.length; i++) {
+                cards[i].style.display = "none"
+                if (cards[i].className.indexOf(filter) > -1) cards[i].style.display = "block"
+            }
+
+            let current_active = btnContainer.getElementsByClassName("active");
+            current_active[0].className = current_active[0].className.replace(" active", "");
+            btn.className += " active";
+        }
+        let filter_lists = document.getElementsByClassName("filter-container")
+        for (let i=0; i<filter_lists.length; i++){
+            filterSelection(filter_lists[i].getElementsByClassName("active")[0], "")
+        }
+
+        let collapsibles = document.getElementsByClassName("collapsible");
+        for (let i = 0; i < collapsibles.length; i++) {
+            collapsibles[i].addEventListener("click", function() {
+                this.classList.toggle("active");
+                let content = this.nextElementSibling;
+                if (content.style.display === "block") {
+                    content.style.display = "none";
+                } else {
+                    content.style.display = "block";
+                }
+            });
+            collapsibles[i].nextElementSibling.style.display = "none"
+        }
+    </script>
+</body>
+</html>

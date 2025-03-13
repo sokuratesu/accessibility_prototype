@@ -1,0 +1,39 @@
+{% extends "accessibility-template.html" %}
+{%- block body %}
+    <h1 class="center">Combined Accessibility Report</h1>
+    <div class="container">
+        <section class="summary">
+            <h2>Summary</h2>
+            <p><b>Date:</b> {{ summary.timestamp }}</p>
+            <p><b>Pages Tested:</b> {{ summary.pages|length }}</p>
+            <p><b>Tools Used:</b> {{ summary.tools_used|join(', ') }}</p>
+            <p><b>Total Issues Found:</b> {{ summary.total_issues }}</p>
+
+            <h3>Pages Tested</h3>
+            {%- for url, page_data in summary.pages.items() %}
+                <p><a href="#page-{{ loop.index }}">{{ url }}</a> ({{ page_data.total_issues }} Issues)</p>
+            {%- endfor %}
+        </section>
+    </div>
+
+    {%- for url, page_data in summary.pages.items() %}
+    <div id="page-{{ loop.index }}">
+        <h2 class="center">{{ url }}</h2>
+        <div class="filter-container center">
+            {%- for tool, results in page_data.tools.items() %}
+            <button class="filter-btn {% if loop.index == 1 %}active{% endif %}" onclick="filterSelection(this, '{{ tool }}')"> {{ tool }} </button>
+            {%- endfor %}
+        </div>
+        {%- for tool, results in page_data.tools.items() %}
+            {% if tool == 'axe' %}
+                {{ issue_container_with_class("Axe", [
+                    {"class": "success", "name": "Passes", "count": results["passes"]|length },
+                    {"class": "failure", "name": "Violations", "count": results["violations"]|length },
+                    {"class": "incomplete", "name": "Incomplete", "count": results["incomplete"]|length },
+                    {"class": "inapplicable", "name": "Inapplicable", "count": results["inapplicable"]|length }
+                ], "filterable " + tool) }}
+            {% endif %}
+        {%- endfor %}
+    </div>
+    {%- endfor %}
+{%- endblock %}

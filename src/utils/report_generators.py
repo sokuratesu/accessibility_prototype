@@ -6,9 +6,17 @@ import os
 import json
 from datetime import datetime
 import html
+
+import jinja2
 from jinja2 import Template
 import pandas as pd
 from openpyxl import Workbook
+
+template_loader = jinja2.FileSystemLoader(searchpath=os.path.abspath("./html_templates/"))
+template_env = jinja2.Environment(loader=template_loader)
+
+axe_template = template_env.get_template("axe-core.html")
+summary_template = template_env.get_template("combined-report.html")
 
 def generate_html_report(results, template_str=None):
     """Generate HTML report from test results."""
@@ -406,87 +414,28 @@ def generate_excel_report(results, output_path):
 
 def generate_summary_report(all_results, main_test_dir):
     """Generate summary report of all tested pages."""
-    # Create summary data
-    summary = {
-        "total_pages": len(all_results),
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "tools_used": set(),
-        "pages": [],
-        "issues_by_category": {}
-    }
+    all_results["total_issues"] = 0
+    for url, page_results in all_results["pages"].items():
+        page_results["total_issues"] = 0
 
-    for url, page_results in all_results.items():
-        page_summary = {
-            "url": url,
-            "tools": [],
-            "total_issues": 0
-        }
-
-        for tool, results in page_results.items():
-            summary["tools_used"].add(tool)
-            page_summary["tools"].append(tool)
-
+        for tool, results in page_results["tools"].items():
             # Count issues for different tools
-            if tool == "axe-core":
-                violations = len(results.get("violations", []))
-                page_summary["total_issues"] += violations
+            if tool == "axe":
+                violations = results.get("violations", [])
+                page_results["total_issues"] += len(violations)
             elif tool == "wave":
                 if "categories" in results:
                     errors = results["categories"].get("error", {}).get("count", 0)
-                    page_summary["total_issues"] += errors
+                    page_results["total_issues"] += errors
             elif tool == "japanese_a11y":
                 if "results" in results:
                     for test_type, test_data in results["results"].items():
                         issues = test_data.get("issues_found", 0)
-                        page_summary["total_issues"] += issues
+                        page_results["total_issues"] += issues
 
-        summary["pages"].append(page_summary)
+        all_results["total_issues"] += page_results["total_issues"]
 
-    # Generate HTML report
-    template_str = """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Accessibility Test Summary Report</title>
-        <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .summary { background-color: #f8f8f8; padding: 15px; margin-bottom: 20px; }
-            table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            th { background-color: #f2f2f2; }
-            .issues-high { background-color: #ffcccc; }
-            .issues-medium { background-color: #fff2cc; }
-            .issues-low { background-color: #e6ffe6; }
-        </style>
-    </head>
-    <body>
-        <h1>Accessibility Test Summary Report</h1>
-        <div class="summary">
-            <p><strong>Pages Tested:</strong> {{ summary.total_pages }}</p>
-            <p><strong>Date:</strong> {{ summary.timestamp }}</p>
-            <p><strong>Tools Used:</strong> {{ summary.tools_used|join(', ') }}</p>
-        </div>
-
-        <h2>Results by Page</h2>
-        <table>
-            <tr>
-                <th>URL</th>
-                <th>Tools</th>
-                <th>Total Issues</th>
-            </tr>
-            {% for page in summary.pages %}
-            <tr class="{% if page.total_issues > 10 %}issues-high{% elif page.total_issues > 0 %}issues-medium{% else %}issues-low{% endif %}">
-                <td>{{ page.url }}</td>
-                <td>{{ page.tools|join(', ') }}</td>
-                <td>{{ page.total_issues }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-    </body>
-    </html>
-    """
-
-    html_report = Template(template_str).render(summary=summary)
+    html_report = summary_template.render(summary=all_results)
 
     # Save HTML report
     output_path = os.path.join(main_test_dir, "summary_report.html")
@@ -520,7 +469,8 @@ class CombinedReportGenerator:
         for url, page_results in all_results.items():
             page_data = {
                 "url": url,
-                "tool_results": {}
+                "tool_results": {},
+                "failures": {}
             }
 
             for tool, results in page_results.items():
@@ -909,4 +859,4 @@ class CombinedReportGenerator:
         </html>
         """
 
-        return Template(template_str).render(combined_data=combined_data)
+        return summary_template.render(combined_data=combined_data)
