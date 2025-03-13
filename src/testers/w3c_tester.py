@@ -231,7 +231,7 @@ return validateARIA();
             }
 
             # Use self.enabled_tests to determine which tests to run
-            enabled_tests = self.enabled_tests
+            # enabled_tests = self.enabled_tests
 
             # If no specific tests are enabled, run all tests
             if enabled_tests is None:

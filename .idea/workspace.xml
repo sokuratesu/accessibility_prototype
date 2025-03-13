@@ -5,14 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="92bae063-f94c-4c97-be3e-66f9e235b1ed" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/core/accessibility_tester.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/testers/w3c_tester.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/testers/wcag22_tester.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/core/test_orchestrator.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/core/test_orchestrator.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ui/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ui/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/utils/report_generators.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils/report_generators.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/testers/w3c_tester.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/testers/w3c_tester.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -29,28 +24,28 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 6
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 6
+}</component>
   <component name="ProjectId" id="2tvTQ7RNgARRAvQLMjjGesdDxnF" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.accessibility_tester.executor": "Debug",
-    "Python.app.executor": "Debug",
-    "Python.config.executor": "Debug",
-    "Python.main.executor": "Debug",
-    "Python.report_generators.executor": "Debug",
-    "Python.wcag_checklist.executor": "Debug",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "main",
-    "last_opened_file_path": "/Users/socratesmejia/development/accessibility_prototype/src/core"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.accessibility_tester.executor&quot;: &quot;Debug&quot;,
+    &quot;Python.app.executor&quot;: &quot;Debug&quot;,
+    &quot;Python.config.executor&quot;: &quot;Debug&quot;,
+    &quot;Python.main.executor&quot;: &quot;Debug&quot;,
+    &quot;Python.report_generators.executor&quot;: &quot;Debug&quot;,
+    &quot;Python.wcag_checklist.executor&quot;: &quot;Debug&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/socratesmejia/development/accessibility_prototype/src/core&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/src/core" />

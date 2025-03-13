@@ -85,6 +85,7 @@ class AccessibilityTestOrchestrator:
         results = {}
         for tester_id in tester_ids:
             try:
+                self.logger.info(f"Running {tester_id} on {url}")
                 tester = self.testers[tester_id]
 
                 # If this is the Japanese tester, pass the configuration
@@ -95,7 +96,7 @@ class AccessibilityTestOrchestrator:
                         tester.ruby_checkbox.value = self.japanese_config.get("ruby_check", True)
 
                 # Run the test
-                self.logger.info(f"Running {tester_id} on {url}")
+                # self.logger.info(f"Running {tester_id} on {url}")
                 start_time = time.time()
 
                 # test_result = tester.test_accessibility(url, test_dir)
@@ -104,7 +105,7 @@ class AccessibilityTestOrchestrator:
                     test_result = tester.test_accessibility(
                         url,
                         test_dir,
-                        enabled_tests=w3c_subtests
+                        enabled_tests=w3c_subtests  # Pass the enabled subtests
                     )
                 else:
                     # Run other testers normally
