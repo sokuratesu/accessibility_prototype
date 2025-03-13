@@ -151,10 +151,10 @@
     {%- endmacro %}
     {%- macro issue_container(container_name, issues) %}{{ issue_container_with_class(container_name, issues, "") }}{% endmacro%}
 
-    {%- macro issue_card(result, title, description, wcag_tags, tags) %}
-    <div class="issue-card filterable {{ result.lower() }}">
+    {%- macro issue_card(result_class, result, title, description, wcag_tags, tags) -%}
+    <div class="issue-card filterable {{ result_class }}">
         <div class="issue-header collapsible">
-            <span class="result-type-badge {{ result.lower() }}">{{ result }}</span>
+            <span class="result-type-badge {{ result_class }}">{{ result }}</span>
             <strong>{{ title }}</strong>
         </div>
         <div class="issue-content">

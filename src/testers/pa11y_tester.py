@@ -8,6 +8,7 @@ import json
 import subprocess
 import tempfile
 import shutil
+import traceback
 from datetime import datetime
 import logging
 
@@ -120,15 +121,17 @@ class Pa11yAccessibilityTester(BaseAccessibilityTester):
             return results
 
         except Exception as e:
-                error_message = f"Error running Pa11y: {str(e)}"
-                self.logger.error(error_message)
-                return {
-                    "tool": "pa11y",
-                    "url": url,
-                    "timestamp": self.timestamp,
-                    "error": error_message,
-                    "test_dir": test_dir
-                }
+               error_message = f"Error running Pa11y: {traceback.format_exc()}"
+               self.logger.error(error_message)
+               return {
+                   "tool": "pa11y",
+                   "url": url,
+                   "timestamp": self.timestamp,
+                   "error": error_message,
+                   "test_dir": test_dir
+               }
+        finally:
+            pass
 
     def generate_report(self, results, output_dir):
                 """Implement abstract method from BaseAccessibilityTester"""

@@ -8,6 +8,7 @@ import json
 import tempfile
 import subprocess
 import shutil
+import traceback
 from datetime import datetime
 import logging
 
@@ -103,7 +104,7 @@ class LighthouseAccessibilityTester(BaseAccessibilityTester):
             return results
 
         except Exception as e:
-            error_message = f"Error running Lighthouse: {str(e)}"
+            error_message = f"Error running Lighthouse: {traceback.format_exc()}"
             self.logger.error(error_message)
             return {
                 "tool": "lighthouse",

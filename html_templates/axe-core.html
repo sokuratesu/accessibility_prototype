@@ -10,7 +10,7 @@
 {%- endmacro %}
 {%- block body %}
     <h1 class="center">Axe Accessibility Report for {{ results.url }}</h1>
-    {{ issue_container("Axe", [
+    {{ issue_container("Summary", [
         {"class": "success", "name": "Passes", "count": results["passes"]|length },
         {"class": "failure", "name": "Violations", "count": results["violations"]|length },
         {"class": "incomplete", "name": "Incomplete", "count": results["incomplete"]|length },
@@ -26,16 +26,16 @@
         </div>
         <div class="issue-card-container">
             {%- for result in results["passes"] %}
-                {{ issue_card("Passed", result["description"], axe_description(result), result["wcag_tags"], result["tags"]) }}
+            {{ issue_card("passed", "Passed", result["description"], axe_description(result), result["wcag_tags"], result["tags"])|indent(8, False) }}
             {%- endfor %}
             {%- for result in results["violations"] %}
-                {{ issue_card("Failed", result["description"], axe_description(result), result["wcag_tags"], result["tags"]) }}
+            {{ issue_card("failed", "Failed", result["description"], axe_description(result), result["wcag_tags"], result["tags"])|indent(8, False) }}
             {%- endfor %}
             {%- for result in results["incomplete"] %}
-                {{ issue_card("Incomplete", result["description"], axe_description(result), result["wcag_tags"], result["tags"]) }}
+            {{ issue_card("incomplete", "Incomplete", result["description"], axe_description(result), result["wcag_tags"], result["tags"])|indent(8, False) }}
             {%- endfor %}
             {%- for result in results["inapplicable"] %}
-                {{ issue_card("Inapplicable", result["description"], axe_description(result), result["wcag_tags"], result["tags"]) }}
+            {{ issue_card("inapplicable", "Inapplicable", result["description"], axe_description(result), result["wcag_tags"], result["tags"])|indent(8, False) }}
             {%- endfor %}
         </div>
     </div>

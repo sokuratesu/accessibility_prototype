@@ -104,6 +104,7 @@ def generate_excel_report(results, output_path):
 def generate_summary_report(all_results, main_test_dir):
     """Generate summary report of all tested pages."""
     all_results["total_issues"] = 0
+    all_results["wcag_conformity"] = []
     for url, page_results in all_results["pages"].items():
         page_results["total_issues"] = 0
 
