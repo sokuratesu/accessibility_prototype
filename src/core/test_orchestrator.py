@@ -6,6 +6,7 @@ Manages multiple accessibility tests and coordinates their execution.
 import os
 import logging
 import json
+import re
 import time
 from datetime import datetime
 import uuid
@@ -177,54 +178,215 @@ class AccessibilityTestOrchestrator:
             self.logger.error(f"Error generating combined reports: {str(e)}")
             return None
 
-    def batch_test_urls(self, urls, tester_ids=None):
-        """Run tests on multiple URLs.
+    # def batch_test_urls(self, urls, tester_ids=None, responsive=False, viewports=None, browsers=None):
+    #     """Run tests on multiple URLs.
+    #
+    #     Args:
+    #         urls (list): List of URLs to test
+    #         tester_ids (list, optional): List of tester IDs to use
+    #
+    #     Returns:
+    #         dict: Results for each URL
+    #         :param browsers:
+    #         :param viewports:
+    #         :param responsive:
+    #     """
+    #     # Create a main test directory
+    #     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    #     base_dir = os.path.join(os.getcwd(), "reports")
+    #     test_id = f"batch_{timestamp}_{uuid.uuid4().hex[:8]}"
+    #     main_test_dir = os.path.join(base_dir, test_id)
+    #     os.makedirs(main_test_dir, exist_ok=True)
+    #
+    #     # Initialize viewports and browsers
+    #     if responsive and not viewports:
+    #         viewports = [320, 768, 1200]
+    #
+    #     if not browsers:
+    #         browsers = ["chrome"]
+    #
+    #     # Run tests for each URL
+    #     all_results = {}
+    #     for i, url in enumerate(urls):
+    #         self.logger.info(f"Testing URL {i + 1}/{len(urls)}: {url}")
+    #
+    #         # Create a subdirectory for this URL
+    #         url_safe_name = url.replace('https://', '').replace('http://', '').replace('/', '_').replace(':', '_')
+    #         if len(url_safe_name) > 50:  # Truncate if too long
+    #             url_safe_name = url_safe_name[:50]
+    #         url_dir = os.path.join(main_test_dir, f"{i + 1}_{url_safe_name}")
+    #
+    #         # Run the tests
+    #         results = self.run_tests(url, tester_ids, url_dir)
+    #         all_results[url] = results
+    #
+    #     # Generate overall summary
+    #     self.logger.info("Generating batch summary report")
+    #     summary_path = generate_summary_report(all_results, main_test_dir)
+    #
+    #     # Save all results
+    #     all_results_path = os.path.join(main_test_dir, "all_urls_results.json")
+    #     with open(all_results_path, 'w', encoding='utf-8') as f:
+    #         json.dump({url: {t: r for t, r in results.items() if "reports" not in t}
+    #                    for url, results in all_results.items()}, f, indent=2)
+    #
+    #     self.logger.info(f"Batch testing complete. Summary: {summary_path}")
+    #
+    #     # Add the test directory to results for UI to access
+    #     for url in all_results:
+    #         for tool in all_results[url]:
+    #             all_results[url][tool]["test_dir"] = main_test_dir
+    #
+    #     return all_results
+
+    # In src/core/test_orchestrator.py
+
+    def batch_test_urls(self, urls, tester_ids=None, responsive=False, viewports=None, browsers=None):
+        """Enhanced batch testing with support for responsive and multi-browser testing.
 
         Args:
             urls (list): List of URLs to test
             tester_ids (list, optional): List of tester IDs to use
+            responsive (bool): Whether to test at different viewport widths
+            viewports (list, optional): List of viewport widths to test at
+            browsers (list, optional): List of browsers to test with
 
         Returns:
-            dict: Results for each URL
+            dict: Results organized by URL, browser, and viewport
         """
-        # Create a main test directory
+        # Create main test directory
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        test_id = f"batch_test_{timestamp}_{uuid.uuid4().hex[:8]}"
         base_dir = os.path.join(os.getcwd(), "reports")
-        test_id = f"batch_{timestamp}_{uuid.uuid4().hex[:8]}"
-        main_test_dir = os.path.join(base_dir, test_id)
-        os.makedirs(main_test_dir, exist_ok=True)
+        test_dir = os.path.join(base_dir, test_id)
+        os.makedirs(test_dir, exist_ok=True)
+
+        # Initialize viewports and browsers
+        if responsive and not viewports:
+            viewports = [320, 768, 1200]
+
+        if not browsers:
+            browsers = ["chrome"]
+
+        # Determine which testers to use
+        if tester_ids is None:
+            tester_ids = list(self.testers.keys())
+        else:
+            # Filter to only registered testers
+            tester_ids = [tid for tid in tester_ids if tid in self.testers]
 
         # Run tests for each URL
         all_results = {}
         for i, url in enumerate(urls):
             self.logger.info(f"Testing URL {i + 1}/{len(urls)}: {url}")
 
-            # Create a subdirectory for this URL
-            url_safe_name = url.replace('https://', '').replace('http://', '').replace('/', '_').replace(':', '_')
-            if len(url_safe_name) > 50:  # Truncate if too long
-                url_safe_name = url_safe_name[:50]
-            url_dir = os.path.join(main_test_dir, f"{i + 1}_{url_safe_name}")
+            # Create URL-specific directory
+            url_safe = re.sub(r'[^a-zA-Z0-9]', '_', url)
+            url_dir = os.path.join(test_dir, f"{i + 1}_{url_safe[:50]}")
+            os.makedirs(url_dir, exist_ok=True)
 
-            # Run the tests
-            results = self.run_tests(url, tester_ids, url_dir)
-            all_results[url] = results
+            # Store results for this URL
+            url_results = {}
 
-        # Generate overall summary
-        self.logger.info("Generating batch summary report")
-        summary_path = generate_summary_report(all_results, main_test_dir)
+            # Test with each browser
+            for browser in browsers:
+                # Store results for this browser
+                browser_results = {}
 
-        # Save all results
-        all_results_path = os.path.join(main_test_dir, "all_urls_results.json")
-        with open(all_results_path, 'w', encoding='utf-8') as f:
-            json.dump({url: {t: r for t, r in results.items() if "reports" not in t}
-                       for url, results in all_results.items()}, f, indent=2)
+                # Set browser for relevant testers
+                for tester_id in tester_ids:
+                    if tester_id in self.testers:
+                        tester = self.testers[tester_id]
+                        if hasattr(tester, 'browser_type'):
+                            # Remember original browser
+                            original_browser = tester.browser_type
+                            # Set browser for this test
+                            tester.browser_type = browser
 
-        self.logger.info(f"Batch testing complete. Summary: {summary_path}")
+                # Test at each viewport if responsive testing is enabled
+                if responsive and viewports:
+                    for viewport in viewports:
+                        self.logger.info(f"Testing {url} with {browser} at {viewport}px width")
 
-        # Add the test directory to results for UI to access
-        for url in all_results:
-            for tool in all_results[url]:
-                all_results[url][tool]["test_dir"] = main_test_dir
+                        # Create subdirectory for this viewport
+                        viewport_dir = os.path.join(url_dir, f"{browser}_{viewport}px")
+                        os.makedirs(viewport_dir, exist_ok=True)
 
+                        # Set viewport for browser-based testers
+                        for tester_id in tester_ids:
+                            if tester_id in self.testers:
+                                tester = self.testers[tester_id]
+                                if hasattr(tester, 'driver') and tester.driver:
+                                    # Get original size
+                                    original_size = tester.driver.get_window_size()
+                                    # Set new viewport size
+                                    tester.driver.set_window_size(viewport, original_size['height'])
+
+                        # Run the tests
+                        try:
+                            results = self.run_tests(url, tester_ids, viewport_dir)
+                            browser_results[viewport] = results
+                        except Exception as e:
+                            self.logger.error(f"Error testing {url} with {browser} at {viewport}px: {str(e)}")
+                            browser_results[viewport] = {
+                                "error": str(e),
+                                "url": url,
+                                "browser": browser,
+                                "viewport": viewport
+                            }
+
+                        # Reset viewport
+                        for tester_id in tester_ids:
+                            if tester_id in self.testers:
+                                tester = self.testers[tester_id]
+                                if hasattr(tester, 'driver') and tester.driver:
+                                    # Restore original size
+                                    tester.driver.set_window_size(original_size['width'], original_size['height'])
+                else:
+                    # Standard test (no responsive)
+                    self.logger.info(f"Testing {url} with {browser}")
+
+                    # Create subdirectory for this browser
+                    browser_dir = os.path.join(url_dir, browser)
+                    os.makedirs(browser_dir, exist_ok=True)
+
+                    # Run the tests
+                    try:
+                        results = self.run_tests(url, tester_ids, browser_dir)
+                        browser_results["standard"] = results
+                    except Exception as e:
+                        self.logger.error(f"Error testing {url} with {browser}: {str(e)}")
+                        browser_results["standard"] = {
+                            "error": str(e),
+                            "url": url,
+                            "browser": browser
+                        }
+
+                # Store results for this browser
+                url_results[browser] = browser_results
+
+                # Reset browser for testers
+                for tester_id in tester_ids:
+                    if tester_id in self.testers:
+                        tester = self.testers[tester_id]
+                        if hasattr(tester, 'browser_type') and 'original_browser' in locals():
+                            tester.browser_type = original_browser
+
+            # Store results for this URL
+            all_results[url] = url_results
+
+        # Generate summary report
+        summary_path = os.path.join(test_dir, "batch_summary.json")
+        with open(summary_path, 'w', encoding='utf-8') as f:
+            json.dump({
+                "timestamp": timestamp,
+                "urls_tested": len(urls),
+                "browsers_tested": browsers,
+                "viewports_tested": viewports if responsive else "standard",
+                "test_location": test_dir,
+                "results": all_results
+            }, f, indent=2, default=str)
+
+        self.logger.info(f"Batch testing complete. Results saved to {test_dir}")
         return all_results
 

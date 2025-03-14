@@ -55,8 +55,24 @@ class AxeAccessibilityTester(BaseAccessibilityTester):
             axe = Axe(self.driver)
             axe.inject()
 
+            # Configure Axe to test for WCAG 2.2
+            config = {
+                "runOnly": {
+                    "type": "tag",
+                    "values": ["wcag2a", "wcag2aa", "wcag22a", "wcag22aa"]
+                },
+                "rules": {
+                    "dragging": {"enabled": True},
+                    "target-size": {"enabled": True},
+                    "focus-not-obscured": {"enabled": True},
+                    "consistent-help": {"enabled": True},
+                    "redundant-entry": {"enabled": True},
+                    "accessible-authentication": {"enabled": True}
+                }
+            }
+
             # Run axe accessibility checks
-            results = axe.run()
+            results = axe.run(options=config)
 
             # Add metadata
             results.update({
