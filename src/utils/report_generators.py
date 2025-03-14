@@ -6,324 +6,21 @@ import os
 import json
 from datetime import datetime
 import html
+
+import jinja2
 from jinja2 import Template
 import pandas as pd
 from openpyxl import Workbook
 
-def generate_html_report(results, template_str=None):
+template_loader = jinja2.FileSystemLoader(searchpath=os.path.join(os.getcwd(), "html_templates"))
+template_env = jinja2.Environment(loader=template_loader)
+
+summary_template = template_env.get_template("combined-report.html")
+
+def generate_html_report(results):
     """Generate HTML report from test results."""
-    if template_str is None:
-        template_str = """
-            <!DOCTYPE html>
-            <html lang="es_ES">
-            <head>
-                <title>Accessibility Test Report</title>
-                <style>
-                    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f9f9f9; color: #333; }
-                    header { background-color: #4CAF50; color: white; padding: 10px 0; text-align: center; }
-                    h1, h2, h3 { color: #4CAF50; }
-                    .summary { background-color: #ffffff; padding: 15px; margin-bottom: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-                    .category { margin-top: 30px; }
-                    table { border-collapse: collapse; width: 100%; margin-top: 20px; background-color: #ffffff; }
-                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                    th { background-color: #f2f2f2; }
-                    .error { color: #d32f2f; }
-                    .warning { color: #ff9800; }
-                    .success { color: #388e3c; }
-                    .highlight { border: 2px solid red; }
-                    pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
-                    .issue-item { margin-bottom: 10px; border-left: 3px solid #ddd; padding-left: 10px; }
-                    .node-details { margin-top: 10px; }
-                    .node-summary { cursor: pointer; color: blue; text-decoration: underline; }
-                    .node-content { display: none; }
-                    .footer { text-align: center; margin-top: 20px; font-size: 0.9em; color: #777; }
-                </style>
-                <script>
-                    function toggleNodeDetails(id) {
-                        var element = document.getElementById(id);
-                        if (element.style.display === "none") {
-                            element.style.display = "block";
-                        } else {
-                            element.style.display = "none";
-                        }
-                    }
-
-                    function highlightAccessibilityIssues() {
-                        var iframe = document.getElementById('targetFrame');
-                        var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-
-                        // Example: Highlight all images without alt attribute
-                        var images = iframeDoc.querySelectorAll('img:not([alt])');
-                        images.forEach(function(img) {
-                            img.classList.add('highlight');
-                        });
-
-                        // Example: Highlight all links without href attribute
-                        var links = iframeDoc.querySelectorAll('a:not([href])');
-                        links.forEach(function(link) {
-                            link.classList.add('highlight');
-                        });
-                    }
-
-                    function loadPage() {
-                        var url = document.getElementById('urlInput').value;
-                        document.getElementById('targetFrame').src = url;
-                    }
-                </script>
-            </head>
-            <body>
-                <header>
-                    <h1>Accessibility Test Report</h1>
-                </header>
-                <div class="summary">
-                    <h2>Summary</h2>
-                    <p><strong>URL:</strong> {{ results.url }}</p>
-                    <p><strong>Tool:</strong> {{ results.tool }}</p>
-                    <p><strong>Date:</strong> {{ results.timestamp }}</p>
-                </div>
-
-                {% if results.error %}
-                    <div class="error">
-                        <h2>Error</h2>
-                        <p>{{ results.error }}</p>
-                    </div>
-                {% else %}
-                    <div>
-                        <label for="urlInput">Enter URL: </label>
-                        <input type="text" id="urlInput" placeholder="https://www.example.com" />
-                        <button onclick="loadPage()">Load Page</button>
-                    </div>
-                    <iframe id="targetFrame" src="{{ results.url }}"></iframe>
-                    <button onclick="highlightAccessibilityIssues()">Highlight Issues</button>
-                    <div class="results-content">
-                        <h2>Results</h2>
-                        {% if results.tool == "axe-core" %}
-                            <!-- Axe-specific reporting -->
-                            {% if results.violations %}
-                                <div class="category error">
-                                    <h3>Violations ({{ results.violations|length }})</h3>
-                                    <table>
-                                        <thead>
-                                            <tr>
-                                                <th>Tool</th>
-                                                <th>Type</th>
-                                                <th>ID</th>
-                                                <th>Page URL</th>
-                                                <th>WCAG Rule</th>
-                                                <th>Description</th>
-                                                <th>Severity</th>
-                                                <th>Suggested Fix</th>
-                                                <th>Help Link</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for violation in results.violations %}
-                                                <tr>
-                                                    <td>{{ results.tool }}</td>
-                                                    <td>violations</td>
-                                                    <td>{{ violation.id }}</td>
-                                                    <td>{{ results.url }}</td>
-                                                    <td>{{ violation.tags|join(', ') }}</td>
-                                                    <td>{{ violation.description }}</td>
-                                                    <td>{{ violation.impact }}</td>
-                                                    <td>{{ violation.help }}</td>
-                                                    <td><a href="{{ violation.helpUrl }}" target="_blank">Help</a></td>
-                                                </tr>
-                                                <tr>
-                                                    <td colspan="9">
-                                                        <div class="node-details">
-                                                            <span class="node-summary" onclick="toggleNodeDetails('node-{{ loop.index }}')">Details</span>
-                                                            <div id="node-{{ loop.index }}" class="node-content">
-                                                                <table>
-                                                                    <thead>
-                                                                        <tr>
-                                                                            <th>Failure Summary</th>
-                                                                            <th>Impact</th>
-                                                                            <th>Target</th>
-                                                                            <th>HTML</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody>
-                                                                        {% for node in violation.nodes %}
-                                                                            <tr>
-                                                                                <td>{{ node.failureSummary|default('N/A') }}</td>
-                                                                                <td>{{ node.impact|default('N/A') }}</td>
-                                                                                <td>
-                                                                                    {{ node.target|join(', ') }}
-                                                                                    <button onclick="highlightElement('{{ node.target[0] }}')">Highlight</button>
-                                                                                </td>
-                                                                                <td><code>{{ node.html|e }}</code></td>
-                                                                            </tr>
-                                                                        {% endfor %}
-                                                                    </tbody>
-                                                                </table>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            {% else %}
-                                <p class="success">No violations found.</p>
-                            {% endif %}
-
-                            {% if results.incomplete %}
-                                <div class="category warning">
-                                    <h3>Incomplete ({{ results.incomplete|length }})</h3>
-                                    <table>
-                                        <thead>
-                                            <tr>
-                                                <th>Tool</th>
-                                                <th>Type</th>
-                                                <th>ID</th>
-                                                <th>Page URL</th>
-                                                <th>WCAG Rule</th>
-                                                <th>Description</th>
-                                                <th>Severity</th>
-                                                <th>Suggested Fix</th>
-                                                <th>Help Link</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for incomplete in results.incomplete %}
-                                                <tr>
-                                                    <td>{{ results.tool }}</td>
-                                                    <td>incomplete</td>
-                                                    <td>{{ incomplete.id }}</td>
-                                                    <td>{{ results.url }}</td>
-                                                    <td>{{ incomplete.tags|join(', ') }}</td>
-                                                    <td>{{ incomplete.description }}</td>
-                                                    <td>{{ incomplete.impact }}</td>
-                                                    <td>{{ incomplete.help }}</td>
-                                                    <td><a href="{{ incomplete.helpUrl }}" target="_blank">Help</a></td>
-                                                </tr>
-                                                <tr>
-                                                    <td colspan="9">
-                                                        <div class="node-details">
-                                                            <span class="node-summary" onclick="toggleNodeDetails('incomplete-node-{{ loop.index }}')">Details</span>
-                                                            <div id="incomplete-node-{{ loop.index }}" class="node-content">
-                                                                <table>
-                                                                    <thead>
-                                                                        <tr>
-                                                                            <th>Failure Summary</th>
-                                                                            <th>Impact</th>
-                                                                            <th>Target</th>
-                                                                            <th>HTML</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody>
-                                                                        {% for node in incomplete.nodes %}
-                                                                            <tr>
-                                                                                <td>{{ node.failureSummary|default('N/A') }}</td>
-                                                                                <td>{{ node.impact|default('N/A') }}</td>
-                                                                                <td>
-                                                                                    {{ node.target|join(', ') }}
-                                                                                    <button onclick="highlightElement('{{ node.target[0] }}')">Highlight</button>
-                                                                                </td>
-                                                                                <td><code>{{ node.html|e }}</code></td>
-                                                                            </tr>
-                                                                        {% endfor %}
-                                                                    </tbody>
-                                                                </table>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            {% endif %}
-
-                            {% if results.passes %}
-                                <div class="category success">
-                                    <h3>Passes ({{ results.passes|length }})</h3>
-                                    <table>
-                                        <thead>
-                                            <tr>
-                                                <th>Tool</th>
-                                                <th>Type</th>
-                                                <th>ID</th>
-                                                <th>Page URL</th>
-                                                <th>WCAG Rule</th>
-                                                <th>Description</th>
-                                                <th>Severity</th>
-                                                <th>Suggested Fix</th>
-                                                <th>Help Link</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for pass in results.passes %}
-                                                <tr>
-                                                    <td>{{ results.tool }}</td>
-                                                    <td>passes</td>
-                                                    <td>{{ pass.id }}</td>
-                                                    <td>{{ results.url }}</td>
-                                                    <td>{{ pass.tags|join(', ') }}</td>
-                                                    <td>{{ pass.description }}</td>
-                                                    <td>{{ pass.impact }}</td>
-                                                    <td>{{ pass.help }}</td>
-                                                    <td><a href="{{ pass.helpUrl }}" target="_blank">Help</a></td>
-                                                </tr>
-                                                <tr>
-                                                    <td colspan="9">
-                                                        <div class="node-details">
-                                                            <span class="node-summary" onclick="toggleNodeDetails('passes-node-{{ loop.index }}')">Details</span>
-                                                            <div id="passes-node-{{ loop.index }}" class="node-content">
-                                                                <table>
-                                                                    <thead>
-                                                                        <tr>
-                                                                            <th>Failure Summary</th>
-                                                                            <th>Impact</th>
-                                                                            <th>Target</th>
-                                                                            <th>HTML</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody>
-                                                                        {% for node in pass.nodes %}
-                                                                            <tr>
-                                                                                <td>{{ node.failureSummary|default('N/A') }}</td>
-                                                                                <td>{{ node.impact|default('N/A') }}</td>
-                                                                                <td>
-                                                                                    {{ node.target|join(', ') }}
-                                                                                    <button onclick="highlightElement('{{ node.target[0] }}')">Highlight</button>
-                                                                                </td>
-                                                                                <td><code>{{ node.html|e }}</code></td>
-                                                                            </tr>
-                                                                        {% endfor %}
-                                                                    </tbody>
-                                                                </table>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            {% endif %}
-                        {% elif results.tool == "wave" %}
-                            <!-- WAVE-specific reporting -->
-                            <!-- WAVE implementation from the WaveAccessibilityTester -->
-                        {% elif results.tool == "japanese_a11y" %}
-                            <!-- Japanese-specific reporting -->
-                            <!-- Content from JapaneseAccessibilityTester -->
-                        {% else %}
-                            <!-- Generic reporting -->
-                            <pre>{{ results|tojson(indent=2) }}</pre>
-                        {% endif %}
-                    </div>
-                {% endif %}
-                <div class="footer">
-                    <p>Accessibility Report generated on {{ results.timestamp }}</p>
-                </div>
-            </body>
-            </html>
-            """
-
-    return Template(template_str).render(results=results)
+    template = template_env.get_template(f"{results["tool"]}.html")
+    return template.render(results=results)
 
 
 def generate_excel_report(results, output_path):
@@ -406,87 +103,29 @@ def generate_excel_report(results, output_path):
 
 def generate_summary_report(all_results, main_test_dir):
     """Generate summary report of all tested pages."""
-    # Create summary data
-    summary = {
-        "total_pages": len(all_results),
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "tools_used": set(),
-        "pages": [],
-        "issues_by_category": {}
-    }
+    all_results["total_issues"] = 0
+    all_results["wcag_conformity"] = []
+    for url, page_results in all_results["pages"].items():
+        page_results["total_issues"] = 0
 
-    for url, page_results in all_results.items():
-        page_summary = {
-            "url": url,
-            "tools": [],
-            "total_issues": 0
-        }
-
-        for tool, results in page_results.items():
-            summary["tools_used"].add(tool)
-            page_summary["tools"].append(tool)
-
+        for tool, results in page_results["tools"].items():
             # Count issues for different tools
-            if tool == "axe-core":
-                violations = len(results.get("violations", []))
-                page_summary["total_issues"] += violations
+            if tool == "axe":
+                violations = results.get("violations", [])
+                page_results["total_issues"] += len(violations)
             elif tool == "wave":
                 if "categories" in results:
                     errors = results["categories"].get("error", {}).get("count", 0)
-                    page_summary["total_issues"] += errors
+                    page_results["total_issues"] += errors
             elif tool == "japanese_a11y":
                 if "results" in results:
                     for test_type, test_data in results["results"].items():
                         issues = test_data.get("issues_found", 0)
-                        page_summary["total_issues"] += issues
+                        page_results["total_issues"] += issues
 
-        summary["pages"].append(page_summary)
+        all_results["total_issues"] += page_results["total_issues"]
 
-    # Generate HTML report
-    template_str = """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Accessibility Test Summary Report</title>
-        <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .summary { background-color: #f8f8f8; padding: 15px; margin-bottom: 20px; }
-            table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            th { background-color: #f2f2f2; }
-            .issues-high { background-color: #ffcccc; }
-            .issues-medium { background-color: #fff2cc; }
-            .issues-low { background-color: #e6ffe6; }
-        </style>
-    </head>
-    <body>
-        <h1>Accessibility Test Summary Report</h1>
-        <div class="summary">
-            <p><strong>Pages Tested:</strong> {{ summary.total_pages }}</p>
-            <p><strong>Date:</strong> {{ summary.timestamp }}</p>
-            <p><strong>Tools Used:</strong> {{ summary.tools_used|join(', ') }}</p>
-        </div>
-
-        <h2>Results by Page</h2>
-        <table>
-            <tr>
-                <th>URL</th>
-                <th>Tools</th>
-                <th>Total Issues</th>
-            </tr>
-            {% for page in summary.pages %}
-            <tr class="{% if page.total_issues > 10 %}issues-high{% elif page.total_issues > 0 %}issues-medium{% else %}issues-low{% endif %}">
-                <td>{{ page.url }}</td>
-                <td>{{ page.tools|join(', ') }}</td>
-                <td>{{ page.total_issues }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-    </body>
-    </html>
-    """
-
-    html_report = Template(template_str).render(summary=summary)
+    html_report = summary_template.render(summary=all_results)
 
     # Save HTML report
     output_path = os.path.join(main_test_dir, "summary_report.html")
@@ -520,7 +159,8 @@ class CombinedReportGenerator:
         for url, page_results in all_results.items():
             page_data = {
                 "url": url,
-                "tool_results": {}
+                "tool_results": {},
+                "failures": {}
             }
 
             for tool, results in page_results.items():
@@ -909,4 +549,4 @@ class CombinedReportGenerator:
         </html>
         """
 
-        return Template(template_str).render(combined_data=combined_data)
+        return summary_template.render(combined_data=combined_data)

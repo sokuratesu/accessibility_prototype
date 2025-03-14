@@ -4,16 +4,11 @@ Provides a graphical user interface using Flet.
 """
 
 import os
-import sys
-
 import flet as ft
 import subprocess
 import platform
 from flet import Page, TextField, ElevatedButton, Text, ProgressBar, Column, SnackBar
 import logging
-import json
-import time
-from datetime import datetime
 
 from ..core.test_orchestrator import AccessibilityTestOrchestrator
 from ..config.config_manager import ConfigManager
@@ -92,39 +87,6 @@ class AccessibilityTesterUI:
         self.pa11y_checkbox = ft.Checkbox(label="Pa11y")
         self.htmlcs_checkbox = ft.Checkbox(label="HTML CodeSniffer")
         self.wcag22_checkbox = ft.Checkbox(label="WCAG 2.2 Custom Tests")
-
-        # Add responsive testing options
-        self.responsive_testing_checkbox = ft.Checkbox(label="Enable Responsive Testing", value=False)
-        self.viewport_sizes_container = ft.Container(
-            content=ft.Column([
-                ft.Text("Viewport Sizes to Test:", size=14),
-                ft.Row([
-                    ft.Checkbox(label="Mobile (320px)", value=True),
-                    ft.Checkbox(label="Tablet (768px)", value=True),
-                    ft.Checkbox(label="Desktop (1200px)", value=True)
-                ])
-            ]),
-            visible=False
-        )
-
-        # Show/hide viewport options when checkbox changes
-        def responsive_checkbox_changed(e):
-            self.viewport_sizes_container.visible = self.responsive_testing_checkbox.value
-            self.page.update()
-
-        self.responsive_testing_checkbox.on_change = responsive_checkbox_changed
-
-        # Add browser selection options
-        self.browser_selection_container = ft.Container(
-            content=ft.Column([
-                ft.Text("Browsers to Test:", size=14),
-                ft.Row([
-                    ft.Checkbox(label="Chrome", value=True),
-                    ft.Checkbox(label="Firefox", value=False),
-                    ft.Checkbox(label="Edge", value=False)
-                ])
-            ])
-        )
 
         # API Key input for WAVE
         self.wave_api_key_input = TextField(
@@ -225,18 +187,12 @@ class AccessibilityTesterUI:
                 self.w3c_checkbox,
                 self.w3c_subtests_container,  # Add the sub-tests container here
                 self.wcag22_checkbox,
-                ft.Divider(),
-                ft.Text("Advanced Testing Options:", size=16, weight=ft.FontWeight.BOLD),
-                self.responsive_testing_checkbox,
-                self.viewport_sizes_container,
-                self.browser_selection_container,
             ]),
             padding=10,
             border=ft.border.all(1, ft.colors.GREY_400),
             border_radius=5,
             margin=ft.margin.only(top=20)
         )
-
 
     def create_japanese_controls(self):
         """Create Japanese-specific testing controls."""
@@ -437,313 +393,112 @@ class AccessibilityTesterUI:
             w3c_tester = self.orchestrator.testers["w3c_tools"]
             w3c_tester.enabled_tests = w3c_subtests
 
-    # def run_tests(self, e):
-    #     """Run accessibility tests."""
-    #     # Validate input
-    #     url = self.url_input.value
-    #     if not url:
-    #         self.show_snackbar("Please enter a URL")
-    #         return
-    #
-    #     # Add http:// prefix if missing
-    #     if not url.startswith(('http://', 'https://')):
-    #         url = 'https://' + url
-    #         self.url_input.value = url
-    #
-    #     # Get selected tools
-    #     selected_tools = []
-    #     if self.axe_checkbox.value:
-    #         selected_tools.append("axe")
-    #
-    #     # For W3C tools, collect the enabled sub-tests
-    #     w3c_enabled_subtests = None
-    #     if self.w3c_checkbox.value:
-    #         w3c_enabled_subtests = []
-    #         if self.w3c_html_validator_checkbox.value:
-    #             w3c_enabled_subtests.append("html_validator")
-    #         if self.w3c_css_validator_checkbox.value:
-    #             w3c_enabled_subtests.append("css_validator")
-    #         if self.w3c_link_checker_checkbox.value:
-    #             w3c_enabled_subtests.append("link_checker")
-    #         if self.w3c_nu_validator_checkbox.value:
-    #             w3c_enabled_subtests.append("nu_validator")
-    #         if self.w3c_aria_validator_checkbox.value:
-    #             w3c_enabled_subtests.append("aria_validator")
-    #         if self.w3c_dom_validator_checkbox.value:
-    #             w3c_enabled_subtests.append("dom_accessibility")
-    #
-    #         # Store the enabled sub-tests for use during testing
-    #         self.w3c_enabled_subtests = w3c_enabled_subtests
-    #         selected_tools.append("w3c_tools")
-    #
-    #     if self.wave_checkbox.value:
-    #         if not self.wave_api_key_input.value:
-    #             self.show_snackbar("Please enter a WAVE API key")
-    #             return
-    #         # Save WAVE API key
-    #         self.config_manager.set_api_key("wave", self.wave_api_key_input.value)
-    #         selected_tools.append("wave")
-    #     if self.lighthouse_checkbox.value:
-    #         selected_tools.append("lighthouse")
-    #     if self.pa11y_checkbox.value:
-    #         selected_tools.append("pa11y")
-    #     if self.htmlcs_checkbox.value:
-    #         selected_tools.append("htmlcs")
-    #     if self.japanese_checkbox.value:
-    #         selected_tools.append("japanese_a11y")
-    #     # For W3C tools, collect the enabled sub-tests
-    #     # if self.w3c_checkbox.value:
-    #     #     self.update_w3c_subtests()  # Call the method here
-    #     #     selected_tools.append("w3c_tools")
-    #
-    #     if self.wcag22_checkbox.value:
-    #         selected_tools.append("wcag22")
-    #
-    #     if not selected_tools:
-    #         self.show_snackbar("Please select at least one testing tool")
-    #         return
-    #
-    #     if not self.orchestrator:
-    #         self.show_snackbar("Test orchestrator not initialized")
-    #         return
-    #
-    #     # Update UI state
-    #     self.progress_bar.visible = True
-    #     self.results_container.visible = True
-    #     self.status_text.value = "Running tests..."
-    #     self.test_button.disabled = True
-    #     self.cancel_button.visible = True
-    #     self.page.update()
-    #
-    #     # If crawling is enabled, get all URLs and show selection dialog
-    #     urls_to_test = [url]
-    #     if self.crawl_checkbox.value:
-    #         try:
-    #             max_pages = int(self.max_pages_input.value)
-    #             self.status_text.value = "Crawling website..."
-    #             self.page.update()
-    #
-    #             crawler = WebsiteCrawler(
-    #                 max_pages=max_pages,
-    #                 same_domain_only=self.same_domain_checkbox.value
-    #             )
-    #             self.crawled_urls = crawler.crawl(url)
-    #
-    #             self.status_text.value = f"Found {len(self.crawled_urls)} pages. Select pages to test."
-    #             self.page.update()
-    #
-    #             # Show page selection dialog
-    #             self.show_page_selection_dialog(self.crawled_urls, selected_tools)
-    #             return
-    #
-    #         except Exception as e:
-    #             self.logger.error(f"Error crawling website: {str(e)}")
-    #             self.show_snackbar(f"Error crawling website: {str(e)}")
-    #             urls_to_test = [url]
-    #
-    #
-    #
-    #     # If not crawling, proceed with direct testing
-    #     self._execute_tests(urls_to_test, selected_tools)
-
-    # In src/ui/app.py
-
     def run_tests(self, e):
         """Run accessibility tests."""
-        # Validate inputs
-        urls = self.url_input.value.strip().split("\n")
-        urls = [url.strip() for url in urls if url.strip()]
-
-        if not urls:
-            self.status_text.value = "Please enter at least one URL to test."
-            self.page.update()
+        # Validate input
+        url = self.url_input.value
+        if not url:
+            self.show_snackbar("Please enter a URL")
             return
+
+        # Add http:// prefix if missing
+        if not url.startswith(('http://', 'https://')):
+            url = 'https://' + url
+            self.url_input.value = url
 
         # Get selected tools
         selected_tools = []
-        for tool_checkbox in self.tool_checkboxes:
-            if tool_checkbox.value:
-                selected_tools.append(tool_checkbox.data)
+        if self.axe_checkbox.value:
+            selected_tools.append("axe")
+
+        # For W3C tools, collect the enabled sub-tests
+        w3c_enabled_subtests = None
+        if self.w3c_checkbox.value:
+            w3c_enabled_subtests = []
+            if self.w3c_html_validator_checkbox.value:
+                w3c_enabled_subtests.append("html_validator")
+            if self.w3c_css_validator_checkbox.value:
+                w3c_enabled_subtests.append("css_validator")
+            if self.w3c_link_checker_checkbox.value:
+                w3c_enabled_subtests.append("link_checker")
+            if self.w3c_nu_validator_checkbox.value:
+                w3c_enabled_subtests.append("nu_validator")
+            if self.w3c_aria_validator_checkbox.value:
+                w3c_enabled_subtests.append("aria_validator")
+            if self.w3c_dom_validator_checkbox.value:
+                w3c_enabled_subtests.append("dom_accessibility")
+
+            # Store the enabled sub-tests for use during testing
+            self.w3c_enabled_subtests = w3c_enabled_subtests
+            selected_tools.append("w3c_tools")
+
+        if self.wave_checkbox.value:
+            if not self.wave_api_key_input.value:
+                self.show_snackbar("Please enter a WAVE API key")
+                return
+            # Save WAVE API key
+            self.config_manager.set_api_key("wave", self.wave_api_key_input.value)
+            selected_tools.append("wave")
+        if self.lighthouse_checkbox.value:
+            selected_tools.append("lighthouse")
+        if self.pa11y_checkbox.value:
+            selected_tools.append("pa11y")
+        if self.htmlcs_checkbox.value:
+            selected_tools.append("htmlcs")
+        if self.japanese_checkbox.value:
+            selected_tools.append("japanese_a11y")
+        # For W3C tools, collect the enabled sub-tests
+        # if self.w3c_checkbox.value:
+        #     self.update_w3c_subtests()  # Call the method here
+        #     selected_tools.append("w3c_tools")
+
+        if self.wcag22_checkbox.value:
+            selected_tools.append("wcag22")
 
         if not selected_tools:
-            self.status_text.value = "Please select at least one testing tool."
-            self.page.update()
+            self.show_snackbar("Please select at least one testing tool")
             return
 
-        # Get responsive testing options
-        responsive_testing = self.responsive_testing_checkbox.value
-        viewport_sizes = []
-        if responsive_testing:
-            # Get the selected viewport sizes
-            viewport_checkboxes = self.viewport_sizes_container.content.controls[1].controls
-            if viewport_checkboxes[0].value:  # Mobile
-                viewport_sizes.append(320)
-            if viewport_checkboxes[1].value:  # Tablet
-                viewport_sizes.append(768)
-            if viewport_checkboxes[2].value:  # Desktop
-                viewport_sizes.append(1200)
+        if not self.orchestrator:
+            self.show_snackbar("Test orchestrator not initialized")
+            return
 
-        # Get browser options
-        browser_checkboxes = self.browser_selection_container.content.controls[1].controls
-        browsers = []
-        if browser_checkboxes[0].value:  # Chrome
-            browsers.append("chrome")
-        if browser_checkboxes[1].value:  # Firefox
-            browsers.append("firefox")
-        if browser_checkboxes[2].value:  # Edge
-            browsers.append("edge")
-
-        # If no browsers selected, default to Chrome
-        if not browsers:
-            browsers = ["chrome"]
-
-        # Update UI state for testing
-        self.status_text.value = f"Testing {len(urls)} URL(s) with {len(selected_tools)} tool(s)..."
-        self.run_button.disabled = True
+        # Update UI state
+        self.progress_bar.visible = True
+        self.results_container.visible = True
+        self.status_text.value = "Running tests..."
+        self.test_button.disabled = True
+        self.cancel_button.visible = True
         self.page.update()
 
-        # Create output directory
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_dir = os.path.join(os.getcwd(), "reports", f"test_{timestamp}")
-        os.makedirs(output_dir, exist_ok=True)
-
-        # For responsive testing
-        if responsive_testing and viewport_sizes:
-            self.status_text.value = f"Testing {len(urls)} URLs at {len(viewport_sizes)} viewport sizes..."
-            self.page.update()
-
-            # Update the orchestrator with the selected testing tools
-            for tool_id in selected_tools:
-                if tool_id not in self.orchestrator.testers:
-                    self._init_tester(tool_id)
-
-            all_results = {}
-
-            # Run tests for each URL
-            for i, url in enumerate(urls):
-                self.status_text.value = f"Testing URL {i + 1}/{len(urls)}: {url}"
+        # If crawling is enabled, get all URLs and show selection dialog
+        urls_to_test = [url]
+        if self.crawl_checkbox.value:
+            try:
+                max_pages = int(self.max_pages_input.value)
+                self.status_text.value = "Crawling website..."
                 self.page.update()
 
-                # Create a subdirectory for this URL
-                url_dir = os.path.join(output_dir, f"url_{i + 1}")
-                os.makedirs(url_dir, exist_ok=True)
+                crawler = WebsiteCrawler(
+                    max_pages=max_pages,
+                    same_domain_only=self.same_domain_checkbox.value
+                )
+                self.crawled_urls = crawler.crawl(url)
 
-                # Test each viewport size
-                for viewport in viewport_sizes:
-                    viewport_dir = os.path.join(url_dir, f"width_{viewport}")
-                    os.makedirs(viewport_dir, exist_ok=True)
-
-                    self.status_text.value = f"Testing {url} at {viewport}px width..."
-                    self.page.update()
-
-                    # Set viewport size for all testers
-                    for tester_id in selected_tools:
-                        tester = self.orchestrator.testers.get(tester_id)
-                        if hasattr(tester, 'driver') and tester.driver:
-                            # Save original size
-                            original_size = tester.driver.get_window_size()
-                            # Set new viewport size
-                            tester.driver.set_window_size(viewport, original_size['height'])
-
-                    # Run tests with this viewport size
-                    results = self.orchestrator.run_tests(url, selected_tools, viewport_dir)
-                    all_results[f"{url}_{viewport}"] = results
-
-                    # Reset viewport for testers
-                    for tester_id in selected_tools:
-                        tester = self.orchestrator.testers.get(tester_id)
-                        if hasattr(tester, 'driver') and tester.driver:
-                            # Restore original size
-                            tester.driver.set_window_size(original_size['width'], original_size['height'])
-
-            # For multiple browsers (if more than one selected)
-            if len(browsers) > 1:
-                # For each browser, re-run with that browser type (skip the default browser)
-                for browser in browsers[1:]:
-                    self.status_text.value = f"Testing with {browser.capitalize()}..."
-                    self.page.update()
-
-                    # Test each URL with this browser
-                    for i, url in enumerate(urls):
-                        self.status_text.value = f"Testing URL {i + 1}/{len(urls)} with {browser}: {url}"
-                        self.page.update()
-
-                        # Create a subdirectory for this browser
-                        browser_dir = os.path.join(url_dir, browser)
-                        os.makedirs(browser_dir, exist_ok=True)
-
-                        # Change browser type for relevant testers
-                        for tester_id in selected_tools:
-                            tester = self.orchestrator.testers.get(tester_id)
-                            if hasattr(tester, 'browser_type'):
-                                # Save original browser
-                                original_browser = tester.browser_type
-                                # Set new browser
-                                tester.browser_type = browser
-
-                                # Test each viewport with this browser
-                                for viewport in viewport_sizes:
-                                    viewport_dir = os.path.join(browser_dir, f"width_{viewport}")
-                                    os.makedirs(viewport_dir, exist_ok=True)
-
-                                    self.status_text.value = f"Testing {url} with {browser} at {viewport}px width..."
-                                    self.page.update()
-
-                                    # Set viewport size for this tester
-                                    if hasattr(tester, 'driver') and tester.driver:
-                                        # Save original size
-                                        original_size = tester.driver.get_window_size()
-                                        # Set new viewport size
-                                        tester.driver.set_window_size(viewport, original_size['height'])
-
-                                    # Run test with this browser and viewport
-                                    results = tester.test_accessibility(url, viewport_dir)
-                                    all_results[f"{url}_{browser}_{viewport}"] = results
-
-                                    # Reset viewport
-                                    if hasattr(tester, 'driver') and tester.driver:
-                                        # Restore original size
-                                        tester.driver.set_window_size(original_size['width'], original_size['height'])
-
-                                # Restore original browser
-                                tester.browser_type = original_browser
-        else:
-            # Run standard tests with default browser (usually Chrome)
-            all_results = {}
-
-            # Update the orchestrator with the selected testing tools
-            for tool_id in selected_tools:
-                if tool_id not in self.orchestrator.testers:
-                    self._init_tester(tool_id)
-
-            # Run tests for each URL
-            for i, url in enumerate(urls):
-                self.status_text.value = f"Testing URL {i + 1}/{len(urls)}: {url}"
+                self.status_text.value = f"Found {len(self.crawled_urls)} pages. Select pages to test."
                 self.page.update()
 
-                # Create a subdirectory for this URL
-                url_dir = os.path.join(output_dir, f"url_{i + 1}")
-                os.makedirs(url_dir, exist_ok=True)
+                # Show page selection dialog
+                self.show_page_selection_dialog(self.crawled_urls, selected_tools)
+                return
 
-                # Run tests
-                results = self.orchestrator.run_tests(url, selected_tools, url_dir)
-                all_results[url] = results
+            except Exception as e:
+                self.logger.error(f"Error crawling website: {str(e)}")
+                self.show_snackbar(f"Error crawling website: {str(e)}")
+                urls_to_test = [url]
 
-        # Save all results to JSON file
-        results_file = os.path.join(output_dir, "all_results.json")
-        with open(results_file, 'w', encoding='utf-8') as f:
-            json.dump(all_results, f, indent=2, default=str)
-
-        # Update UI
-        self.status_text.value = f"Testing complete! Results saved to: {output_dir}"
-        self.run_button.disabled = False
-        self.page.update()
-
-        # Open results folder
-        if os.name == 'nt':  # Windows
-            os.startfile(output_dir)
-        elif os.name == 'posix':  # macOS and Linux
-            subprocess.call(['open', output_dir] if sys.platform == 'darwin' else ['xdg-open', output_dir])
+        # If not crawling, proceed with direct testing
+        self._execute_tests(urls_to_test, selected_tools)
 
     def show_page_selection_dialog(self, urls, selected_tools):
         """Show dialog to select which pages to test using overlay.

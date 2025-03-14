@@ -83,6 +83,11 @@ class AxeAccessibilityTester(BaseAccessibilityTester):
                 "test_dir": self.main_test_dir
             })
 
+            self.reformat_data(results["passes"])
+            self.reformat_data(results["violations"])
+            self.reformat_data(results["incomplete"])
+            self.reformat_data(results["inapplicable"])
+
             return results
 
         except Exception as e:
@@ -99,6 +104,32 @@ class AxeAccessibilityTester(BaseAccessibilityTester):
             if self.driver:
                 self.driver.quit()
 
+    @staticmethod
+    def reformat_data(results: list) -> None:
+        for result in results:
+            #Change the descriptions so that they don't mess up html data.
+            result["description"] = AxeAccessibilityTester.html_replace(result["description"])
+            result["help"] = AxeAccessibilityTester.html_replace(result["help"])
+            for node in result["nodes"]:
+                node["html"] = AxeAccessibilityTester.html_replace(node["html"])
+
+            #Change the results so that wcag tags and regular tags are separate.
+            result["wcag_tags"] = []
+            for tag in result["tags"]:
+                if "wcag" in tag:
+                    result["wcag_tags"].append(tag)
+            for wcag_tag in result["wcag_tags"]:
+                result["tags"].remove(wcag_tag)
+
+    @staticmethod
+    def html_replace(data: str) -> str:
+        return (data
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\n", "<br/>")
+            .replace("  ", "&emsp;")
+        )
+
     def generate_report(self, results, output_dir):
         """Generate report from axe-core results."""
         try:
@@ -108,14 +139,14 @@ class AxeAccessibilityTester(BaseAccessibilityTester):
             html_filename = f"axe_{self.browser_type}_{page_id}_{results['timestamp']}.html"
 
             # Save JSON report
-            json_path = os.path.join(output_dir, "json_reports", json_filename)
+            json_path = os.path.join(output_dir, json_filename)
             os.makedirs(os.path.dirname(json_path), exist_ok=True)
             with open(json_path, 'w', encoding='utf-8') as f:
                 json.dump(results, f, indent=2)
 
             # Generate and save HTML report
             html_report = generate_html_report(results)
-            html_path = os.path.join(output_dir, "html_reports", html_filename)
+            html_path = os.path.join(output_dir, html_filename)
             os.makedirs(os.path.dirname(html_path), exist_ok=True)
             with open(html_path, 'w', encoding='utf-8') as f:
                 f.write(html_report)

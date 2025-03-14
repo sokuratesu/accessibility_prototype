@@ -1,0 +1,168 @@
+{
+  "entries": [
+    {
+      "name": "Perceivable",
+      "description": "Information and user interface components must be presentable to users in ways they can perceive.",
+      "section": "1.",
+      "children": [
+        {
+          "name": "Text Alternatives",
+          "description": "Provide text alternatives for any non-text content so that it can be changed into other forms people need, such as large print, braille, speech, symbols or simpler language.",
+          "section": "1.1.",
+          "children": [
+            {
+              "name": "Non-Text Content",
+              "description": "All non-text content that is presented to the user has a text alternative that serves the equivalent purpose.",
+              "level": "A",
+              "section": "1.1.1."
+            }
+          ]
+        },
+        {
+          "name": "Time-Based Media",
+          "description": "Provide alternatives for time-based media.",
+          "section": "1.2.",
+          "children": [
+            {
+              "name": "Audio-Only and Video-Only (Prerecorded)",
+              "description": "Alternatives are provided for prerecorded audio-only and prerecorded video-only media, except when the audio or video is a media alternative for text and is clearly labeled as such.",
+              "level": "A",
+              "section": "1.2.1."
+            },
+            {
+              "name": "Captions (Prerecorded)",
+              "description": "Captions are provided for all prerecorded audio content in synchronized media, except when the media is a media alternative for text and is clearly labeled as such.",
+              "level": "A",
+              "section": "1.2.2."
+            },
+            {
+              "name": "Audio Description or Media Alternative (Prerecorded)",
+              "description": "An alternative for time-based media or audio description of the prerecorded video content is provided for synchronized media, except when the media is a media alternative for text and is clearly labeled as such.",
+              "level": "A",
+              "section": "1.2.3."
+            },
+            {
+              "name": "Captions (Live)",
+              "description": "Captions are provided for all live audio content in synchronized media.",
+              "level": "AA",
+              "section": "1.2.4."
+            },
+            {
+              "name": "Audio Description (Prerecorded)",
+              "description": "Audio description is provided for all prerecorded video content in synchronized media.",
+              "level": "AA",
+              "section": "1.2.5."
+            },
+            {
+              "name": "Sign Language (Prerecorded)",
+              "description": "Sign language interpretation is provided for all prerecorded audio content in synchronized media.",
+              "level": "AAA",
+              "section": "1.2.6."
+            },
+            {
+              "name": "Extended Audio Description (Prerecorded)",
+              "description": "Where pauses in foreground audio are insufficient to allow audio descriptions to convey the sense of the video, extended audio description is provided for all prerecorded video content in synchronized media.",
+              "level": "AAA",
+              "section": "1.2.7."
+            },
+            {
+              "name": "Media Alternative (Prerecorded)",
+              "description": "An alternative for time-based media is provided for all prerecorded synchronized media and for all prerecorded video-only media.",
+              "level": "AAA",
+              "section": "1.2.8."
+            },
+            {
+              "name": "Audio-Only (Live)",
+              "description": "An alternative for time-based media that presents equivalent information for live audio-only content is provided.",
+              "level": "AAA",
+              "section": "1.2.9."
+            }
+          ]
+        },
+        {
+          "name": "Adaptable",
+          "description": "Create content that can be presented in different ways (for example simpler layout) without losing information or structure.",
+          "section": "1.3.",
+          "children": [
+            {
+              "name": "Info and Relationships",
+              "description": "Information, structure, and relationships conveyed through presentation can be programmatically determined or are available in text.",
+              "level": "A",
+              "section": "1.3.1."
+            },
+            {
+              "name": "Meaningful Sequence",
+              "description": "When the sequence in which content is presented affects its meaning, a correct reading sequence can be programmatically determined.",
+              "level": "A",
+              "section": "1.3.2."
+            },
+            {
+              "name": "Sensory Characteristics",
+              "description": "Instructions provided for understanding and operating content do not rely solely on sensory characteristics of components such as shape, color, size, visual location, orientation, or sound.",
+              "level": "A",
+              "section": "1.3.3."
+            },
+            {
+              "name": "Orientation",
+              "description": "Content does not restrict its view and operation to a single display orientation, such as portrait or landscape, unless a specific display orientation is essential.",
+              "level": "AA",
+              "section": "1.3.4."
+            },
+            {
+              "name": "Identify Input Purpose",
+              "description": "The purpose of each input field collecting information about the user can be programmatically determined when:\n\nThe input field serves a purpose identified in the Input Purposes for user interface components section; and\nThe content is implemented using technologies with support for identifying the expected meaning for form input data.",
+              "level": "AA",
+              "section": "1.3.5."
+            },
+            {
+              "name": "Identify Purpose",
+              "description": "In content implemented using markup languages, the purpose of user interface components, icons, and regions can be programmatically determined.",
+              "level": "AAA",
+              "section": "1.3.6."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Operable",
+      "description": "User interface components and navigation must be operable.",
+      "section": "2.",
+      "children": [
+        {
+          "name": "Navigable",
+          "description": "Provide ways to help users navigate, find content, and determine where they are.",
+          "section": "2.4.",
+          "children": [
+            {
+              "name": "Page Titled",
+              "description": "Web pages have titles that describe topic or purpose.",
+              "level": "A",
+              "section": "2.4.2."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Robust",
+      "description": "Content must be robust enough that it can be interpreted by a wide variety of user agents, including assistive technologies.",
+      "section": "4.",
+      "children": [
+        {
+          "name": "Compatible",
+          "description": "Maximize compatibility with current and future user agents, including assistive technologies.",
+          "section": "4.1.",
+          "children": [
+            {
+              "name": "Name, Role, Value",
+              "description": "For all user interface components (including but not limited to: form elements, links and components generated by scripts), the name and role can be programmatically determined; states, properties, and values that can be set by the user can be programmatically set; and notification of changes to these items is available to user agents, including assistive technologies.",
+              "level": "A",
+              "section": "4.1.2."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{% extends "accessibility-template.html" %}
+{%- macro get_wcag22_description(results) %}
+    <b>Description: </b>{{ results["description"] }}<br/>
+    <b>Summary: </b>{{ results["summary"] }}<br/>
+    {%- if results["issues"]|length > 0 %}
+        <h4>Issues</h4>
+        {%- for issue in results["issues"] %}
+            <b>Message: </b> {{ issue["message"] }} <br/>
+            <b>Element: </b> {{ issue["element"] }} <br/>
+                <i>ID: </i> {{ issue["element_info"]["id"] }} <br/>
+                <i>Class: </i> {{ issue["element_info"]["class"] }} <br/>
+                <i>Text: </i> {{ issue["element_info"]["text"] }} <br/>
+        {%- endfor %}
+    {%- endif %}
+{%- endmacro %}
+{%- block body %}
+    <h1 class="center">WCAG 2.2 Accessibility Tests for {{ results.url }}</h1>
+    {{ issue_container("Summary", [
+        {"class": "inapplicable", "name": "Criteria Tested", "count": results.summary.criteria_tested },
+        {"class": "success", "name": "Passed", "count": results.summary.criteria_passed },
+        {"class": "failure", "name": "Failed", "count": results.summary.criteria_failed },
+        {"class": "incomplete", "name": "Manual Checks Required", "count": results.summary.manual_checks_required  }
+    ])}}
+    <div class="issues-container">
+        <div class="issues-filter-container filter-container">
+            <button class="filter-btn active" data-filter='all' onclick="filterSelection(this)"> Show all </button>
+            <button class="filter-btn" data-filter='passed' onclick="filterSelection(this)"> Passed </button>
+            <button class="filter-btn" data-filter='failed' onclick="filterSelection(this)"> Failed </button>
+            <button class="filter-btn" data-filter='incomplete' onclick="filterSelection(this)"> Needs Manual Inspection </button>
+        </div>
+        <div class="issue-card-container">
+        {%- for criterion_id, criterion_results in results.results.items() %}
+            {%- set result = "Failed" %} {%- set result_class = "failed" %}
+            {%- if criterion_results["passed"] %} {%- set result = "Passed" %} {%- set result_class = "passed" %} {% endif %}
+            {%- if criterion_results["manual_check_required"] %} {%- set result = "Manual Check Required" %} {%- set result_class = "incomplete" %} {% endif %}
+            {{ issue_card(result_class, result, criterion_results["name"], get_wcag22_description(criterion_results), "", "")|indent(8, False) }}
+        {%- endfor %}
+        </div>
+    </div>
+{%- endblock %}
