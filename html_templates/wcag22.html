@@ -23,10 +23,10 @@
     ])}}
     <div class="issues-container">
         <div class="issues-filter-container filter-container">
-            <button class="filter-btn active" onclick="filterSelection(this, 'all')"> Show all </button>
-            <button class="filter-btn" onclick="filterSelection(this, 'passed')"> Passed </button>
-            <button class="filter-btn" onclick="filterSelection(this, 'failed')"> Failed </button>
-            <button class="filter-btn" onclick="filterSelection(this, 'incomplete')"> Needs Manual Inspection </button>
+            <button class="filter-btn active" data-filter='all' onclick="filterSelection(this)"> Show all </button>
+            <button class="filter-btn" data-filter='passed' onclick="filterSelection(this)"> Passed </button>
+            <button class="filter-btn" data-filter='failed' onclick="filterSelection(this)"> Failed </button>
+            <button class="filter-btn" data-filter='incomplete' onclick="filterSelection(this)"> Needs Manual Inspection </button>
         </div>
         <div class="issue-card-container">
         {%- for criterion_id, criterion_results in results.results.items() %}

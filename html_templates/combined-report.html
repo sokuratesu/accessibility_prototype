@@ -21,7 +21,7 @@
         <h2 class="center">{{ url }}</h2>
         <div class="filter-container center">
             {%- for tool, results in page_data.tools.items() %}
-            <button class="filter-btn {% if loop.index == 1 %}active{% endif %}" onclick="filterSelection(this, '{{ tool }}')"> {{ tool }} </button>
+            <button class="filter-btn {% if loop.index == 1 %}active{% endif %}" data-filter='{{ tool }}' onclick="filterSelection(this)"> {{ tool }} </button>
             {%- endfor %}
         </div>
         {%- for tool, results in page_data.tools.items() %}

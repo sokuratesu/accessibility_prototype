@@ -18,11 +18,11 @@
     ])}}
     <div class="issues-container">
         <div class="issues-filter-container filter-container">
-            <button class="filter-btn active" onclick="filterSelection(this, 'all')"> Show all </button>
-            <button class="filter-btn" onclick="filterSelection(this, 'passed')"> Success </button>
-            <button class="filter-btn" onclick="filterSelection(this, 'failed')"> Failure </button>
-            <button class="filter-btn" onclick="filterSelection(this, 'incomplete')"> Incomplete </button>
-            <button class="filter-btn" onclick="filterSelection(this, 'inapplicable')"> Inapplicable </button>
+            <button class="filter-btn active" data-filter='all' onclick="filterSelection(this)"> Show all </button>
+            <button class="filter-btn" data-filter='passed' onclick="filterSelection(this)"> Success </button>
+            <button class="filter-btn" data-filter='failed' onclick="filterSelection(this)"> Failure </button>
+            <button class="filter-btn" data-filter='incomplete' onclick="filterSelection(this)"> Incomplete </button>
+            <button class="filter-btn" data-filter='inapplicable' onclick="filterSelection(this)"> Inapplicable </button>
         </div>
         <div class="issue-card-container">
             {%- for result in results["passes"] %}

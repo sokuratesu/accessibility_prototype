@@ -174,9 +174,10 @@
     {%- block body %}{% endblock %}
 
     <script>
-        function filterSelection(btn, filter) {
+        function filterSelection(btn) {
             let btnContainer = btn.parentElement;
             let cards = btnContainer.parentElement.getElementsByClassName("filterable");
+            let filter = btn.getAttribute("data-filter")
             if (filter === "all") filter = "";
             for (let i = 0; i < cards.length; i++) {
                 cards[i].style.display = "none"
@@ -189,7 +190,7 @@
         }
         let filter_lists = document.getElementsByClassName("filter-container")
         for (let i=0; i<filter_lists.length; i++){
-            filterSelection(filter_lists[i].getElementsByClassName("active")[0], "")
+            filterSelection(filter_lists[i].getElementsByClassName("active")[0])
         }
 
         let collapsibles = document.getElementsByClassName("collapsible");
