@@ -5,20 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="92bae063-f94c-4c97-be3e-66f9e235b1ed" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/html_templates/empty-placeholder.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/html_templates/enhanced-summary-report.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/accessibility_prototype.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/accessibility_prototype.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/html_templates/accessibility-template.html" beforeDir="false" afterPath="$PROJECT_DIR$/html_templates/accessibility-template.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/html_templates/combined-report.html" beforeDir="false" afterPath="$PROJECT_DIR$/html_templates/combined-report.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/html_templates/wcag22.html" beforeDir="false" afterPath="$PROJECT_DIR$/html_templates/wcag22.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/config/config_manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/config/config_manager.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/testers/axe_tester.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/testers/axe_tester.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/testers/lighthouse_tester.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/testers/lighthouse_tester.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/testers/pa11y_tester.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/testers/pa11y_tester.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/testers/wcag22_tester.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/testers/wcag22_tester.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ui/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ui/app.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/utils/report_generators.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils/report_generators.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
