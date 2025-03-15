@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Enhanced Accessibility Report</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1, h2, h3, h4 { color: #2a4365; }
+        .summary { background-color: #f8f9fa; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .browser-nav { display: flex; gap: 10px; margin: 20px 0; }
+        .browser-tab { padding: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; }
+        .browser-tab.active { background-color: #e9ecef; font-weight: bold; }
+        .browser-content { display: none; }
+        .browser-content.active { display: block; }
+        .size-nav { display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0; }
+        .size-tab { padding: 8px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; }
+        .size-tab.active { background-color: #e9ecef; font-weight: bold; }
+        .size-content { display: none; }
+        .size-content.active { display: block; }
+        .tool-header { background-color: #f8f9fa; padding: 10px; margin: 15px 0 10px; border-radius: 5px; }
+        .issue-list { margin-left: 20px; }
+        .issue-item { margin-bottom: 8px; padding-left: 10px; border-left: 3px solid #ddd; }
+        .status-good { color: #28a745; }
+        .status-warning { color: #ffc107; }
+        .status-error { color: #dc3545; }
+        .comparison-table th { position: sticky; top: 0; background-color: #f2f2f2; }
+        .url-section { margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+        .issue-count { font-weight: bold; }
+        .error-count { color: #dc3545; }
+        .warning-count { color: #ffc107; }
+        .notice-count { color: #17a2b8; }
+        .comparison-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; margin: 20px 0; }
+        .comparison-card { border: 1px solid #ddd; border-radius: 5px; padding: 15px; }
+        .card-header { font-weight: bold; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        .toggle-button { margin-top: 10px; padding: 5px 10px; background-color: #f2f2f2; border: none; border-radius: 3px; cursor: pointer; }
+        .toggle-button:hover { background-color: #e9ecef; }
+        @media (max-width: 768px) {
+            .comparison-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Enhanced Accessibility Report</h1>
+
+    <div class="summary">
+        <h2>Summary</h2>
+        <p><strong>Date:</strong> {{ results.timestamp }}</p>
+        <p><strong>URLs Tested:</strong> {{ results.urls|length }}</p>
+        <p><strong>Browsers:</strong> {{ results.browsers|join(', ') }}</p>
+        <p><strong>Screen Sizes:</strong>
+            {% for size in results.screen_sizes %}
+                {{ size[0] }} ({{ size[1] }}×{{ size[2] }}px){% if not loop.last %}, {% endif %}
+            {% endfor %}
+        </p>
+        <p><strong>Testing Tools:</strong> {{ results.tools|join(', ') }}</p>
+    </div>
+
+    <h2>Cross-Browser Comparison</h2>
+
+    {% for url, url_data in results.urls.items() %}
+        <div class="url-section">
+            <h3>{{ url }}</h3>
+
+            <h4>Browser Comparison</h4>
+            <div class="comparison-grid">
+                {% for browser, browser_data in url_data.browsers.items() %}
+                    <div class="comparison-card">
+                        <div class="card-header">{{ browser }}</div>
+
+                        {% set total_issues = [] %}
+                        {% for size_key, size_data in browser_data.screen_sizes.items() %}
+                            {% for tool, tool_data in size_data.tools.items() %}
+                                {% if tool == 'axe' and tool_data.violations %}
+                                    {% set _ = total_issues.extend(tool_data.violations) %}
+                                {% elif tool == 'wave' and tool_data.categories.error %}
+                                    {%- for i in range(tool_data.categories.error.count) %} {{ total_issues.append(1) }} {% endfor %}
+                                {% endif %}
+                            {% endfor %}
+                        {% endfor %}
+
+                        <p class="issue-count {% if total_issues|length > 0 %}error-count{% endif %}">
+                            Issues found: {{ total_issues|length }}
+                        </p>
+
+                        <button class="toggle-button" onclick="toggleDetails('{{ url|replace('.', '_') }}_{{ browser }}')">
+                            View Details
+                        </button>
+
+                        <div id="{{ url|replace('.', '_') }}_{{ browser }}" style="display: none; margin-top: 10px;">
+                            {% for size_key, size_data in browser_data.screen_sizes.items() %}
+                                <div style="margin-top: 10px; padding-top: 5px; border-top: 1px dashed #ddd;">
+                                    <h5>{{ size_key }}</h5>
+                                    {% for tool, tool_data in size_data["tools"].items() %}
+                                        <div style="margin-left: 10px;">
+                                            <strong>{{ tool }}:</strong>
+
+                                            {% if tool == 'axe' %}
+                                                {{ tool_data.violations|length }} violations
+                                            {% elif tool == 'wave' %}
+                                                {{ tool_data.categories.error.count }} errors
+                                            {% else %}
+                                                {% if tool_data.error %}
+                                                    Error: {{ tool_data.error }}
+                                                {% else %}
+                                                    Completed
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <h4>Screen Size Comparison</h4>
+            <table class="comparison-table">
+                <tr>
+                    <th>Screen Size</th>
+                    {% for browser in results.browsers %}
+                        <th>{{ browser }}</th>
+                    {% endfor %}
+                </tr>
+                {% for size_name, width, height in results.screen_sizes %}
+                    {% set size_key = size_name + '_' + width|string + 'x' + height|string %}
+                    <tr>
+                        <td>{{ size_name }} ({{ width }}×{{ height }})</td>
+                        {% for browser in results.browsers %}
+                            <td>
+                                {% if url_data.browsers[browser] and url_data.browsers[browser].screen_sizes[size_key] %}
+                                    {% set size_data = url_data.browsers[browser].screen_sizes[size_key] %}
+                                    {% set issue_count = 0 %}
+
+                                    {% for tool, tool_data in size_data.tools.items() %}
+                                        {% if tool == 'axe' and tool_data.violations %}
+                                            {% set issue_count = issue_count + tool_data.violations|length %}
+                                        {% elif tool == 'wave' and tool_data.categories.error %}
+                                            {% set issue_count = issue_count + tool_data.categories.error.count %}
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    <span class="{% if issue_count > 10 %}status-error{% elif issue_count > 0 %}status-warning{% else %}status-good{% endif %}">
+                                        {{ issue_count }} issues
+                                    </span>
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    {% endfor %}
+
+    <script>
+        function toggleDetails(id) {
+            const element = document.getElementById(id);
+            if (element.style.display === "none") {
+                element.style.display = "block";
+            } else {
+                element.style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>

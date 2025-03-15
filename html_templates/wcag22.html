@@ -1,18 +1,82 @@
 {% extends "accessibility-template.html" %}
+
+{%- block colors %}
+    --color-wcag22-table-header: #e0e7ff;
+
+    --color-wcag22-issue-border: #edb4b9;
+    --color-wcag22-issue-background: #edd3d5;
+
+    --color-wcag22-manual-check-background: #e8c489;
+{%- endblock %}
+
+{%- block style %}
+    .wcag22-issue-box {
+        border-left: 2px solid var(--color-wcag22-issue-border);
+        background-color: var(--color-wcag22-issue-background);
+        margin-bottom: 1rem;
+        padding: 0.5rem;
+    }
+    .wcag22-manual-check-box {
+        background-color: var(--color-wcag22-manual-check-background);
+        border-radius: 15px;
+        margin: 1rem;
+        padding: 0.5rem;
+    }
+
+    table.wcag22-table {
+        width: 100%;
+        border-collapse: collapse;
+        * { border: 1px solid; }
+        tr {
+            th, td { padding: 0.1rem 0.5rem 0.1rem 0.5rem; }
+            th { background-color: var(--color-wcag22-table-header); }
+            td { background-color: white; }
+        }
+    }
+{%- endblock %}
+
 {%- macro get_wcag22_description(results) %}
     <b>Description: </b>{{ results["description"] }}<br/>
     <b>Summary: </b>{{ results["summary"] }}<br/>
     {%- if results["issues"]|length > 0 %}
-        <h4>Issues</h4>
+        <br/>
+        <h4>Issues ({{ results["issues"]|length }})</h4>
         {%- for issue in results["issues"] %}
-            <b>Message: </b> {{ issue["message"] }} <br/>
-            <b>Element: </b> {{ issue["element"] }} <br/>
-                <i>ID: </i> {{ issue["element_info"]["id"] }} <br/>
-                <i>Class: </i> {{ issue["element_info"]["class"] }} <br/>
-                <i>Text: </i> {{ issue["element_info"]["text"] }} <br/>
+            <div class="wcag22-issue-box">
+                <b>Message: </b> {{ issue["message"] }} <br/>
+                <b>Element: </b> {{ issue["element"] }} <br/>
+                    <i>ID: </i> {{ issue["element_info"]["id"] }} <br/>
+                    <i>Class: </i> {{ issue["element_info"]["class"] }} <br/>
+                    <i>Text: </i> {{ issue["element_info"]["text"] }} <br/>
+            </div>
         {%- endfor %}
     {%- endif %}
+    {%- if results["manual_check_required"] %}
+            <div class="wcag22-manual-check-box">
+                <span><b>Manual Check Required: </b>{{ results["manual_check_instructions"] }}</span>
+            </div>
+    {%- endif %}
+    {%- if results["help_mechanisms"]|length > 0 %}
+        <details>
+            <summary>Help Mechanisms Found ({{ results["help_mechanisms"]|length }})</summary>
+            <table class="wcag22-table">
+                <tr>
+                    <th>Type</th>
+                    <th>Text</th>
+                    <th>Element</th>
+                </tr>
+                {%- for help in results["help_mechanisms"] %}
+                <tr>
+                    <td>{{ help["help_type"] }}</td>
+                    <td>{{ help["element"] }}</td>
+                    <td>{{ help["element_info"]["text"] }}</td>
+                </tr>
+                {%- endfor %}
+            </table>
+        </details>
+    {%- endif %}
 {%- endmacro %}
+
 {%- block body %}
     <h1 class="center">WCAG 2.2 Accessibility Tests for {{ results.url }}</h1>
     {{ issue_container("Summary", [
@@ -33,7 +97,7 @@
             {%- set result = "Failed" %} {%- set result_class = "failed" %}
             {%- if criterion_results["passed"] %} {%- set result = "Passed" %} {%- set result_class = "passed" %} {% endif %}
             {%- if criterion_results["manual_check_required"] %} {%- set result = "Manual Check Required" %} {%- set result_class = "incomplete" %} {% endif %}
-            {{ issue_card(result_class, result, criterion_results["name"], get_wcag22_description(criterion_results), "", "")|indent(8, False) }}
+            {{ issue_card(result_class, result, criterion_results["name"], get_wcag22_description(criterion_results), ["Level " + criterion_results["level"]], "")|indent(8, False) }}
         {%- endfor %}
         </div>
     </div>

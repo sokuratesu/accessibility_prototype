@@ -140,6 +140,7 @@ class WCAG22Tester(BaseAccessibilityTester):
 
             # Add metadata
             results["summary"] = self._create_summary(results["results"])
+            results["total_issues"] = results["summary"]["total_issues"]
 
             return results
 
@@ -1032,18 +1033,14 @@ class WCAG22Tester(BaseAccessibilityTester):
             json_filename = f"wcag22_{page_id}_{results['timestamp']}.json"
             html_filename = f"wcag22_{page_id}_{results['timestamp']}.html"
 
-            # Create directories
-            os.makedirs(os.path.join(output_dir, "json_reports"), exist_ok=True)
-            os.makedirs(os.path.join(output_dir, "html_reports"), exist_ok=True)
-
             # Save JSON report
-            json_path = os.path.join(output_dir, "json_reports", json_filename)
+            json_path = os.path.join(output_dir, json_filename)
             with open(json_path, 'w', encoding='utf-8') as f:
                 json.dump(results, f, indent=2)
 
             # Generate and save HTML report
             html_report = generate_html_report(results)
-            html_path = os.path.join(output_dir, "html_reports", html_filename)
+            html_path = os.path.join(output_dir, html_filename)
             with open(html_path, 'w', encoding='utf-8') as f:
                 f.write(html_report)
 
