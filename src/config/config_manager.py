@@ -328,8 +328,17 @@ class ConfigManager:
             dict: Browser settings
         """
         return self.config.get('browser_settings', {
-            'screen_sizes': [],
-            'browsers': []
+            'screen_sizes': [
+                {"name": "Mobile", "width": 375, "height": 667, "enabled": True},
+                {"name": "Tablet", "width": 768, "height": 1024, "enabled": True},
+                {"name": "Desktop", "width": 1366, "height": 768, "enabled": True}
+            ],
+            'browsers': [
+                {"name": "Chrome", "enabled": True},
+                {"name": "Firefox", "enabled": False},
+                {"name": "Edge", "enabled": False},
+                {"name": "Safari", "enabled": False}
+            ]
         })
 
     def update_browser_settings(self, settings: dict):

@@ -4,7 +4,23 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="92bae063-f94c-4c97-be3e-66f9e235b1ed" name="Changes" comment="" />
+    <list default="true" id="92bae063-f94c-4c97-be3e-66f9e235b1ed" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/html_templates/empty-placeholder.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/html_templates/enhanced-summary-report.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/accessibility_prototype.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/accessibility_prototype.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/html_templates/accessibility-template.html" beforeDir="false" afterPath="$PROJECT_DIR$/html_templates/accessibility-template.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/html_templates/combined-report.html" beforeDir="false" afterPath="$PROJECT_DIR$/html_templates/combined-report.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/html_templates/wcag22.html" beforeDir="false" afterPath="$PROJECT_DIR$/html_templates/wcag22.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/config/config_manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/config/config_manager.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/testers/axe_tester.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/testers/axe_tester.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/testers/lighthouse_tester.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/testers/lighthouse_tester.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/testers/pa11y_tester.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/testers/pa11y_tester.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/testers/wcag22_tester.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/testers/wcag22_tester.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ui/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ui/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/utils/report_generators.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils/report_generators.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -29,19 +45,19 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Python.accessibility_tester.executor&quot;: &quot;Debug&quot;,
-    &quot;Python.app.executor&quot;: &quot;Debug&quot;,
-    &quot;Python.config.executor&quot;: &quot;Debug&quot;,
-    &quot;Python.main.executor&quot;: &quot;Debug&quot;,
-    &quot;Python.report_generators.executor&quot;: &quot;Debug&quot;,
-    &quot;Python.wcag_checklist.executor&quot;: &quot;Debug&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/socratesmejia/development/accessibility_prototype/src/core&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Python.accessibility_tester.executor": "Debug",
+    "Python.app.executor": "Debug",
+    "Python.config.executor": "Debug",
+    "Python.main.executor": "Run",
+    "Python.report_generators.executor": "Debug",
+    "Python.wcag_checklist.executor": "Debug",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "/Users/socratesmejia/development/accessibility_prototype/src/core"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/src/core" />
@@ -63,7 +79,7 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="SDK_NAME" value="Python 3.13 (accessibility_prototype)" />
+      <option name="SDK_NAME" value="Python 3.13" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />

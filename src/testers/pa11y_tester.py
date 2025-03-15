@@ -33,7 +33,8 @@ class Pa11yAccessibilityTester(BaseAccessibilityTester):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                check=False
+                check=False,
+                shell=True,
             )
             if result.returncode != 0:
                 self.logger.warning("Pa11y not found. Make sure npm and Pa11y are installed.")

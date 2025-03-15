@@ -2,6 +2,7 @@
 UI module for the Accessibility Tester application.
 Provides a graphical user interface using Flet.
 """
+import traceback
 from datetime import datetime
 import os
 import uuid
@@ -12,6 +13,7 @@ import platform
 from flet import Page, TextField, ElevatedButton, Text, ProgressBar, Column, SnackBar
 import logging
 
+from utils.report_generators import generate_enhanced_summary_report
 from ..core.test_orchestrator import AccessibilityTestOrchestrator
 from ..config.config_manager import ConfigManager
 from ..utils.crawler import WebsiteCrawler
@@ -21,6 +23,9 @@ class AccessibilityTesterUI:
     """Main UI for the accessibility tester."""
 
     def __init__(self, page: Page):
+        self.url_checkboxes = []
+        self.browser_checkboxes = {}
+        self.screen_size_controls = []
         self.page = page
         self.setup_page_properties()
 
@@ -343,7 +348,6 @@ class AccessibilityTesterUI:
 
     def create_page_selection_dialog(self):
         """Initialize page selection dialog components."""
-        self.url_checkboxes = []
         self.select_all_checkbox = None
 
     def toggle_all_urls(self, e):
@@ -575,7 +579,7 @@ class AccessibilityTesterUI:
                 )
 
             # Generate enhanced summary report with browser comparison
-            summary_path = self._generate_enhanced_summary_report(all_results, main_test_dir)
+            summary_path = generate_enhanced_summary_report(all_results, main_test_dir)
             self.logger.info(f"Saved Enhanced Summary Report to '{summary_path}'")
 
             # Display completion message
@@ -591,7 +595,7 @@ class AccessibilityTesterUI:
             self.open_reports_button.visible = True
 
         except Exception as e:
-            self.logger.error(f"Error running tests: {str(e)}")
+            self.logger.error(f"Error running tests: {traceback.format_exc()}")
             self.status_text.value = f"Error: {str(e)}"
 
         # Reset UI state
@@ -600,206 +604,6 @@ class AccessibilityTesterUI:
         self.cancel_button.visible = False
         self.page.update()
 
-    def _generate_enhanced_summary_report(self, all_results, main_test_dir):
-        """Generate an enhanced summary report that compares results across browsers and screen sizes.
-
-        Args:
-            all_results (dict): All test results
-            main_test_dir (str): Main test directory
-
-        Returns:
-            str: Path to the generated report
-        """
-        try:
-            from jinja2 import Template
-
-            template_str = """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Enhanced Accessibility Report</title>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <style>
-                    body { font-family: Arial, sans-serif; margin: 20px; }
-                    h1, h2, h3, h4 { color: #2a4365; }
-                    .summary { background-color: #f8f9fa; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
-                    table { border-collapse: collapse; width: 100%; margin: 20px 0; }
-                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                    th { background-color: #f2f2f2; }
-                    .browser-nav { display: flex; gap: 10px; margin: 20px 0; }
-                    .browser-tab { padding: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; }
-                    .browser-tab.active { background-color: #e9ecef; font-weight: bold; }
-                    .browser-content { display: none; }
-                    .browser-content.active { display: block; }
-                    .size-nav { display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0; }
-                    .size-tab { padding: 8px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; }
-                    .size-tab.active { background-color: #e9ecef; font-weight: bold; }
-                    .size-content { display: none; }
-                    .size-content.active { display: block; }
-                    .tool-header { background-color: #f8f9fa; padding: 10px; margin: 15px 0 10px; border-radius: 5px; }
-                    .issue-list { margin-left: 20px; }
-                    .issue-item { margin-bottom: 8px; padding-left: 10px; border-left: 3px solid #ddd; }
-                    .status-good { color: #28a745; }
-                    .status-warning { color: #ffc107; }
-                    .status-error { color: #dc3545; }
-                    .comparison-table th { position: sticky; top: 0; background-color: #f2f2f2; }
-                    .url-section { margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
-                    .issue-count { font-weight: bold; }
-                    .error-count { color: #dc3545; }
-                    .warning-count { color: #ffc107; }
-                    .notice-count { color: #17a2b8; }
-                    .comparison-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; margin: 20px 0; }
-                    .comparison-card { border: 1px solid #ddd; border-radius: 5px; padding: 15px; }
-                    .card-header { font-weight: bold; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
-                    .toggle-button { margin-top: 10px; padding: 5px 10px; background-color: #f2f2f2; border: none; border-radius: 3px; cursor: pointer; }
-                    .toggle-button:hover { background-color: #e9ecef; }
-                    @media (max-width: 768px) {
-                        .comparison-grid { grid-template-columns: 1fr; }
-                    }
-                </style>
-            </head>
-            <body>
-                <h1>Enhanced Accessibility Report</h1>
-
-                <div class="summary">
-                    <h2>Summary</h2>
-                    <p><strong>Date:</strong> {{ results.timestamp }}</p>
-                    <p><strong>URLs Tested:</strong> {{ results.urls|length }}</p>
-                    <p><strong>Browsers:</strong> {{ results.browsers|join(', ') }}</p>
-                    <p><strong>Screen Sizes:</strong> 
-                        {% for size in results.screen_sizes %}
-                            {{ size[0] }} ({{ size[1] }}×{{ size[2] }}px){% if not loop.last %}, {% endif %}
-                        {% endfor %}
-                    </p>
-                    <p><strong>Testing Tools:</strong> {{ results.tools|join(', ') }}</p>
-                </div>
-
-                <h2>Cross-Browser Comparison</h2>
-
-                {% for url, url_data in results.urls.items() %}
-                    <div class="url-section">
-                        <h3>{{ url }}</h3>
-
-                        <h4>Browser Comparison</h4>
-                        <div class="comparison-grid">
-                            {% for browser, browser_data in url_data.browsers.items() %}
-                                <div class="comparison-card">
-                                    <div class="card-header">{{ browser }}</div>
-
-                                    {% set total_issues = [] %}
-                                    {% for size_key, size_data in browser_data.screen_sizes.items() %}
-                                        {% for tool, tool_data in size_data.tools.items() %}
-                                            {% if tool == 'axe' and tool_data.violations %}
-                                                {% set _ = total_issues.extend(tool_data.violations) %}
-                                            {% elif tool == 'wave' and tool_data.categories.error %}
-                                                {% set _ = total_issues.append(1) for _ in range(tool_data.categories.error.count) %}
-                                            {% endif %}
-                                        {% endfor %}
-                                    {% endfor %}
-
-                                    <p class="issue-count {% if total_issues|length > 0 %}error-count{% endif %}">
-                                        Issues found: {{ total_issues|length }}
-                                    </p>
-
-                                    <button class="toggle-button" onclick="toggleDetails('{{ url|replace('.', '_') }}_{{ browser }}')">
-                                        View Details
-                                    </button>
-
-                                    <div id="{{ url|replace('.', '_') }}_{{ browser }}" style="display: none; margin-top: 10px;">
-                                        {% for size_key, size_data in browser_data.screen_sizes.items() %}
-                                            <div style="margin-top: 10px; padding-top: 5px; border-top: 1px dashed #ddd;">
-                                                <h5>{{ size_key }}</h5>
-                                                {% for tool, tool_data in size_data.tools.items() %}
-                                                    <div style="margin-left: 10px;">
-                                                        <strong>{{ tool }}:</strong>
-
-                                                        {% if tool == 'axe' %}
-                                                            {{ tool_data.violations|length }} violations
-                                                        {% elif tool == 'wave' %}
-                                                            {{ tool_data.categories.error.count }} errors
-                                                        {% else %}
-                                                            {% if tool_data.error %}
-                                                                Error: {{ tool_data.error }}
-                                                            {% else %}
-                                                                Completed
-                                                            {% endif %}
-                                                        {% endif %}
-                                                    </div>
-                                                {% endfor %}
-                                            </div>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-
-                        <h4>Screen Size Comparison</h4>
-                        <table class="comparison-table">
-                            <tr>
-                                <th>Screen Size</th>
-                                {% for browser in results.browsers %}
-                                    <th>{{ browser }}</th>
-                                {% endfor %}
-                            </tr>
-                            {% for size_name, width, height in results.screen_sizes %}
-                                {% set size_key = size_name + '_' + width|string + 'x' + height|string %}
-                                <tr>
-                                    <td>{{ size_name }} ({{ width }}×{{ height }})</td>
-                                    {% for browser in results.browsers %}
-                                        <td>
-                                            {% if url_data.browsers[browser] and url_data.browsers[browser].screen_sizes[size_key] %}
-                                                {% set size_data = url_data.browsers[browser].screen_sizes[size_key] %}
-                                                {% set issue_count = 0 %}
-
-                                                {% for tool, tool_data in size_data.tools.items() %}
-                                                    {% if tool == 'axe' and tool_data.violations %}
-                                                        {% set issue_count = issue_count + tool_data.violations|length %}
-                                                    {% elif tool == 'wave' and tool_data.categories.error %}
-                                                        {% set issue_count = issue_count + tool_data.categories.error.count %}
-                                                    {% endif %}
-                                                {% endfor %}
-
-                                                <span class="{% if issue_count > 10 %}status-error{% elif issue_count > 0 %}status-warning{% else %}status-good{% endif %}">
-                                                    {{ issue_count }} issues
-                                                </span>
-                                            {% else %}
-                                                N/A
-                                            {% endif %}
-                                        </td>
-                                    {% endfor %}
-                                </tr>
-                            {% endfor %}
-                        </table>
-                    </div>
-                {% endfor %}
-
-                <script>
-                    function toggleDetails(id) {
-                        const element = document.getElementById(id);
-                        if (element.style.display === "none") {
-                            element.style.display = "block";
-                        } else {
-                            element.style.display = "none";
-                        }
-                    }
-                </script>
-            </body>
-            </html>
-            """
-
-            html_report = Template(template_str).render(results=all_results)
-
-            # Save HTML report
-            output_path = os.path.join(main_test_dir, "enhanced_summary.html")
-            with open(output_path, 'w', encoding='utf-8') as f:
-                f.write(html_report)
-
-            return output_path
-        except Exception as e:
-            self.logger.error(f"Error generating enhanced summary report: {str(e)}")
-            return None
-
     def show_page_selection_dialog(self, urls, selected_tools):
         """Show dialog to select which pages to test using overlay.
 
@@ -807,7 +611,7 @@ class AccessibilityTesterUI:
             urls (list): List of URLs found by crawler
             selected_tools (list): Selected testing tools
         """
-        print(f"Showing URL selection with {len(urls)} URLs")
+        self.logger.info(f"Showing URL selection with {len(urls)} URLs")
 
         # Reset checkbox list
         self.url_checkboxes = []
@@ -1144,18 +948,9 @@ class AccessibilityTesterUI:
         browser_heading = ft.Text("Browser Settings:", size=16, weight=ft.FontWeight.BOLD)
 
         # Create browser checkboxes
-        self.browser_checkboxes = {}
         browser_list = ft.Column(spacing=5)
 
-        # Add predefined browsers
-        default_browsers = [
-            {"name": "Chrome", "enabled": True},
-            {"name": "Firefox", "enabled": False},
-            {"name": "Edge", "enabled": False},
-            {"name": "Safari", "enabled": False}
-        ]
-
-        browsers = browser_settings.get("browsers", default_browsers)
+        browsers = browser_settings["browsers"]
 
         for browser in browsers:
             browser_name = browser.get("name")
@@ -1165,22 +960,15 @@ class AccessibilityTesterUI:
             )
             self.browser_checkboxes[browser_name] = checkbox
             browser_list.controls.append(checkbox)
+        print(f"{browser_list.controls}: {len(browser_list.controls)}")
 
         # Screen size selection section
         screen_size_heading = ft.Text("Screen Sizes:", size=16, weight=ft.FontWeight.BOLD)
 
         # Create screen size items with width/height inputs
-        self.screen_size_controls = []
         screen_size_list = ft.Column(spacing=10)
 
-        # Add predefined screen sizes
-        default_sizes = [
-            {"name": "Mobile", "width": 375, "height": 667, "enabled": True},
-            {"name": "Tablet", "width": 768, "height": 1024, "enabled": True},
-            {"name": "Desktop", "width": 1366, "height": 768, "enabled": True}
-        ]
-
-        screen_sizes = browser_settings.get("screen_sizes", default_sizes)
+        screen_sizes = browser_settings["screen_sizes"]
 
         for size in screen_sizes:
             size_row = ft.Row([

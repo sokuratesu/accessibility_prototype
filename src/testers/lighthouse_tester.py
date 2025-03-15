@@ -32,13 +32,14 @@ class LighthouseAccessibilityTester(BaseAccessibilityTester):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                check=False
+                check=False,
+                shell=True,
             )
             if result.returncode != 0:
                 self.logger.warning("Lighthouse not found. Make sure npm and Lighthouse are installed.")
                 self.logger.warning("Install with: npm install -g lighthouse")
         except Exception as e:
-            self.logger.warning(f"Error checking Lighthouse installation: {str(e)}")
+            self.logger.warning(f"Error checking Lighthouse installation: {traceback.format_exc()}")
 
     def test_accessibility(self, url, test_dir=None):
         """Implement abstract method from BaseAccessibilityTester"""

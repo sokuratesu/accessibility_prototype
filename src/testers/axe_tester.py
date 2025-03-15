@@ -80,7 +80,8 @@ class AxeAccessibilityTester(BaseAccessibilityTester):
                 "url": url,
                 "timestamp": self.timestamp,
                 "browser": self.browser_type,
-                "test_dir": self.main_test_dir
+                "test_dir": self.main_test_dir,
+                "total_issues": len(results["violations"])
             })
 
             self.reformat_data(results["passes"])

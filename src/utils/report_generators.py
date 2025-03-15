@@ -3,19 +3,16 @@ Report generators for accessibility testing results.
 """
 
 import os
-import json
 from datetime import datetime
-import html
 
 import jinja2
-from jinja2 import Template
-import pandas as pd
 from openpyxl import Workbook
 
 template_loader = jinja2.FileSystemLoader(searchpath=os.path.join(os.getcwd(), "html_templates"))
 template_env = jinja2.Environment(loader=template_loader)
 
 summary_template = template_env.get_template("combined-report.html")
+enhanced_summary_template = template_env.get_template("enhanced-summary-report.html")
 
 def generate_html_report(results):
     """Generate HTML report from test results."""
@@ -104,25 +101,12 @@ def generate_excel_report(results, output_path):
 def generate_summary_report(all_results, main_test_dir):
     """Generate summary report of all tested pages."""
     all_results["total_issues"] = 0
-    all_results["wcag_conformity"] = []
+
+    #Total up the issues for each page and the test as a whole
     for url, page_results in all_results["pages"].items():
         page_results["total_issues"] = 0
-
         for tool, results in page_results["tools"].items():
-            # Count issues for different tools
-            if tool == "axe":
-                violations = results.get("violations", [])
-                page_results["total_issues"] += len(violations)
-            elif tool == "wave":
-                if "categories" in results:
-                    errors = results["categories"].get("error", {}).get("count", 0)
-                    page_results["total_issues"] += errors
-            elif tool == "japanese_a11y":
-                if "results" in results:
-                    for test_type, test_data in results["results"].items():
-                        issues = test_data.get("issues_found", 0)
-                        page_results["total_issues"] += issues
-
+            page_results["total_issues"] += results["total_issues"]
         all_results["total_issues"] += page_results["total_issues"]
 
     html_report = summary_template.render(summary=all_results)
@@ -132,6 +116,15 @@ def generate_summary_report(all_results, main_test_dir):
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(html_report)
 
+    return output_path
+
+
+def generate_enhanced_summary_report(results: dict, main_test_dir: str) -> str:
+    html_report = enhanced_summary_template.render(results=results)
+
+    output_path = os.path.join(main_test_dir, "enhanced_summary.html")
+    with open(output_path, 'w', encoding='utf-8') as f:
+        f.write(html_report)
     return output_path
 
 
