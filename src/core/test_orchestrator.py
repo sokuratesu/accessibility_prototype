@@ -247,7 +247,7 @@ class AccessibilityTestOrchestrator:
         Returns:
             dict: Test results for each browser, screen size, and tester
         """
-        from ..ui.browser_testing_helper import BrowserTestingManager, ScreenSize
+        from utils.browser_testing_helper import BrowserTestingManager, ScreenSize
 
         # Create test directory if not provided
         if test_dir is None:

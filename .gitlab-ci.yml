@@ -1,0 +1,64 @@
+image: python:3.10
+
+stages:
+  - test
+
+accessibility-test:
+  stage: test
+  variables:
+    # Set default URLs to test if not provided
+    DEFAULT_URLS: "https://example.com https://gitlab.com"
+    # Install Chrome and Firefox
+    CHROME_URL: "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
+    CHROME_PACKAGE: "google-chrome-stable_current_amd64.deb"
+  before_script:
+    # Install Chrome
+    - apt-get update && apt-get install -y wget gnupg unzip
+    - wget -q -O ${CHROME_PACKAGE} ${CHROME_URL}
+    - apt-get install -y ./${CHROME_PACKAGE}
+    - rm ${CHROME_PACKAGE}
+
+    # Install Firefox
+    - apt-get install -y firefox-esr
+
+    # Install dependencies
+    - pip install -r requirements.txt
+    - pip install webdriver-manager selenium pillow opencv-python numpy
+  script:
+    # Run accessibility tests with specified URLs or defaults
+    - |
+      if [ -n "$URLS" ]; then
+        URLS_ARG="$URLS"
+      else
+        URLS_ARG="$DEFAULT_URLS"
+      fi
+      
+      # Run the accessibility tests
+      python -m cicd_integration --urls $URLS_ARG \
+        --browsers chrome firefox \
+        --testers axe lighthouse \
+        --report-dir reports \
+        --desktop --tablet --mobile \
+        --verbose
+  after_script:
+    # Check for critical issues but don't fail the pipeline
+    - python -m cicd_integration.check_critical_issues --report-dir reports || true
+  artifacts:
+    paths:
+      - reports/
+    expire_in: 1 week
+
+# Run weekly on a schedule
+accessibility-scheduled:
+  extends: accessibility-test
+  only:
+    - schedules
+  variables:
+    # Test more URLs in scheduled runs
+    URLS: "https://example.com https://gitlab.com https://developer.mozilla.org"
+
+# Manual trigger with custom URLs
+accessibility-manual:
+  extends: accessibility-test
+  when: manual
+  allow_failure: true

@@ -10,14 +10,13 @@ import uuid
 import flet as ft
 import subprocess
 import platform
-from flet import Page, TextField, ElevatedButton, Text, ProgressBar, Column, SnackBar
+from flet import Page, TextField, ElevatedButton, Text, ProgressBar
 import logging
 
 from utils.report_generators import generate_enhanced_summary_report
 from ..core.test_orchestrator import AccessibilityTestOrchestrator
 from ..config.config_manager import ConfigManager
 from ..utils.crawler import WebsiteCrawler
-from .browser_testing_helper import BrowserTestingManager, ScreenSize
 
 
 class AccessibilityTesterUI:
@@ -1199,6 +1198,10 @@ class AccessibilityTesterUI:
             "screen_sizes": screen_sizes
         })
 
+    """
+    Enhanced report filtering implementation.
+    """
+
     def _generate_enhanced_summary_report(self, all_results, main_test_dir):
         """Generate an enhanced summary report that compares results across browsers and screen sizes.
 
@@ -1253,8 +1256,75 @@ class AccessibilityTesterUI:
                     .card-header { font-weight: bold; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
                     .toggle-button { margin-top: 10px; padding: 5px 10px; background-color: #f2f2f2; border: none; border-radius: 3px; cursor: pointer; }
                     .toggle-button:hover { background-color: #e9ecef; }
+
+                    /* Filter controls */
+                    .filter-controls {
+                        background-color: #f8f9fa;
+                        padding: 15px;
+                        margin: 20px 0;
+                        border-radius: 5px;
+                        border: 1px solid #ddd;
+                    }
+                    .filter-row {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 15px;
+                        margin-bottom: 10px;
+                    }
+                    .filter-group {
+                        display: flex;
+                        flex-direction: column;
+                        min-width: 200px;
+                    }
+                    .filter-label {
+                        font-weight: bold;
+                        margin-bottom: 5px;
+                    }
+                    .filter-options {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 8px;
+                    }
+                    .filter-checkbox {
+                        margin-right: 5px;
+                    }
+                    .filter-button {
+                        padding: 8px 16px;
+                        background-color: #4a5568;
+                        color: white;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                    }
+                    .filter-button:hover {
+                        background-color: #2d3748;
+                    }
+                    .filter-reset {
+                        background-color: #cbd5e0;
+                        color: #2d3748;
+                    }
+
+                    /* Highlighting */
+                    .highlight {
+                        background-color: #ffffcc;
+                    }
+
+                    /* Hide filtered items */
+                    .filtered-out {
+                        display: none !important;
+                    }
+
+                    .search-box {
+                        padding: 8px;
+                        border: 1px solid #ddd;
+                        border-radius: 5px;
+                        width: 100%;
+                        max-width: 300px;
+                    }
+
                     @media (max-width: 768px) {
                         .comparison-grid { grid-template-columns: 1fr; }
+                        .filter-row { flex-direction: column; }
                     }
                 </style>
             </head>
@@ -1274,16 +1344,95 @@ class AccessibilityTesterUI:
                     <p><strong>Testing Tools:</strong> {{ results.tools|join(', ') }}</p>
                 </div>
 
+                <!-- Filter Controls -->
+                <div class="filter-controls">
+                    <h3>Filter Results</h3>
+
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label class="filter-label">Browsers:</label>
+                            <div class="filter-options" id="browser-filters">
+                                {% for browser in results.browsers %}
+                                    <label>
+                                        <input type="checkbox" class="filter-checkbox" value="{{ browser }}" checked> {{ browser }}
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Screen Sizes:</label>
+                            <div class="filter-options" id="size-filters">
+                                {% for size in results.screen_sizes %}
+                                    <label>
+                                        <input type="checkbox" class="filter-checkbox" value="{{ size[0] }}" checked> {{ size[0] }} ({{ size[1] }}×{{ size[2] }}px)
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Tools:</label>
+                            <div class="filter-options" id="tool-filters">
+                                {% for tool in results.tools %}
+                                    <label>
+                                        <input type="checkbox" class="filter-checkbox" value="{{ tool }}" checked> {{ tool }}
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label class="filter-label">Issue Severity:</label>
+                            <div class="filter-options" id="severity-filters">
+                                <label>
+                                    <input type="checkbox" class="filter-checkbox" value="error" checked> Errors
+                                </label>
+                                <label>
+                                    <input type="checkbox" class="filter-checkbox" value="warning" checked> Warnings
+                                </label>
+                                <label>
+                                    <input type="checkbox" class="filter-checkbox" value="notice" checked> Notices
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Show:</label>
+                            <div class="filter-options" id="show-filters">
+                                <label>
+                                    <input type="checkbox" class="filter-checkbox" value="issues_only"> Only show pages with issues
+                                </label>
+                                <label>
+                                    <input type="checkbox" class="filter-checkbox" value="highlight_differences" checked> Highlight cross-browser differences
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">Search:</label>
+                            <input type="text" id="search-box" class="search-box" placeholder="Search issues..." />
+                        </div>
+                    </div>
+
+                    <div class="filter-row">
+                        <button class="filter-button" id="apply-filters">Apply Filters</button>
+                        <button class="filter-button filter-reset" id="reset-filters">Reset Filters</button>
+                    </div>
+                </div>
+
                 <h2>Cross-Browser Comparison</h2>
 
                 {% for url, url_data in results.urls.items() %}
-                    <div class="url-section">
+                    <div class="url-section" data-url="{{ url }}">
                         <h3>{{ url }}</h3>
 
                         <h4>Browser Comparison</h4>
                         <div class="comparison-grid">
                             {% for browser, browser_data in url_data.browsers.items() %}
-                                <div class="comparison-card">
+                                <div class="comparison-card" data-browser="{{ browser }}">
                                     <div class="card-header">{{ browser }}</div>
 
                                     {% set total_issues = [] %}
@@ -1307,21 +1456,47 @@ class AccessibilityTesterUI:
 
                                     <div id="{{ url|replace('.', '_') }}_{{ browser }}" style="display: none; margin-top: 10px;">
                                         {% for size_key, size_data in browser_data.screen_sizes.items() %}
-                                            <div style="margin-top: 10px; padding-top: 5px; border-top: 1px dashed #ddd;">
+                                            {% set size_name = size_key.split('_')[0] %}
+                                            <div style="margin-top: 10px; padding-top: 5px; border-top: 1px dashed #ddd;" 
+                                                data-screen-size="{{ size_name }}" class="screen-size-section">
                                                 <h5>{{ size_key }}</h5>
                                                 {% for tool, tool_data in size_data.tools.items() %}
-                                                    <div style="margin-left: 10px;">
+                                                    <div style="margin-left: 10px;" data-tool="{{ tool }}" class="tool-section">
                                                         <strong>{{ tool }}:</strong>
 
                                                         {% if tool == 'axe' %}
-                                                            {{ tool_data.violations|length }} violations
+                                                            {% if tool_data.violations %}
+                                                                <span class="error-count">{{ tool_data.violations|length }} violations</span>
+                                                                <ul class="issue-list">
+                                                                    {% for violation in tool_data.violations %}
+                                                                        <li class="issue-item" data-severity="error">
+                                                                            {{ violation.help }} ({{ violation.impact }})
+                                                                        </li>
+                                                                    {% endfor %}
+                                                                </ul>
+                                                            {% else %}
+                                                                <span class="status-good">No violations</span>
+                                                            {% endif %}
                                                         {% elif tool == 'wave' %}
-                                                            {{ tool_data.categories.error.count }} errors
+                                                            {% if tool_data.categories.error.count > 0 %}
+                                                                <span class="error-count">{{ tool_data.categories.error.count }} errors</span>
+                                                                {% if tool_data.categories.error.items %}
+                                                                    <ul class="issue-list">
+                                                                        {% for id, error in tool_data.categories.error.items.items() %}
+                                                                            <li class="issue-item" data-severity="error">
+                                                                                {{ error.description }} ({{ error.count }})
+                                                                            </li>
+                                                                        {% endfor %}
+                                                                    </ul>
+                                                                {% endif %}
+                                                            {% else %}
+                                                                <span class="status-good">No errors</span>
+                                                            {% endif %}
                                                         {% else %}
                                                             {% if tool_data.error %}
-                                                                Error: {{ tool_data.error }}
+                                                                <span class="error-count">Error: {{ tool_data.error }}</span>
                                                             {% else %}
-                                                                Completed
+                                                                <span class="status-good">Completed</span>
                                                             {% endif %}
                                                         {% endif %}
                                                     </div>
@@ -1343,13 +1518,14 @@ class AccessibilityTesterUI:
                             </tr>
                             {% for size_name, width, height in results.screen_sizes %}
                                 {% set size_key = size_name + '_' + width|string + 'x' + height|string %}
-                                <tr>
+                                <tr data-screen-size="{{ size_name }}">
                                     <td>{{ size_name }} ({{ width }}×{{ height }})</td>
                                     {% for browser in results.browsers %}
-                                        <td>
+                                        <td data-browser="{{ browser }}">
                                             {% if url_data.browsers[browser] and url_data.browsers[browser].screen_sizes[size_key] %}
                                                 {% set size_data = url_data.browsers[browser].screen_sizes[size_key] %}
                                                 {% set issue_count = 0 %}
+                                                {% set has_diff = false %}
 
                                                 {% for tool, tool_data in size_data.tools.items() %}
                                                     {% if tool == 'axe' and tool_data.violations %}
@@ -1359,8 +1535,14 @@ class AccessibilityTesterUI:
                                                     {% endif %}
                                                 {% endfor %}
 
-                                                <span class="{% if issue_count > 10 %}status-error{% elif issue_count > 0 %}status-warning{% else %}status-good{% endif %}">
+                                                {% if size_data.screenshot_diff and size_data.screenshot_diff.has_differences %}
+                                                    {% set has_diff = true %}
+                                                {% endif %}
+
+                                                <span class="{% if issue_count > 10 %}status-error{% elif issue_count > 0 %}status-warning{% else %}status-good{% endif %} 
+                                                      {% if has_diff %}highlight{% endif %}">
                                                     {{ issue_count }} issues
+                                                    {% if has_diff %} (differs){% endif %}
                                                 </span>
                                             {% else %}
                                                 N/A
@@ -1374,6 +1556,7 @@ class AccessibilityTesterUI:
                 {% endfor %}
 
                 <script>
+                    // Toggle details function
                     function toggleDetails(id) {
                         const element = document.getElementById(id);
                         if (element.style.display === "none") {
@@ -1382,6 +1565,139 @@ class AccessibilityTesterUI:
                             element.style.display = "none";
                         }
                     }
+
+                    // Filter functionality
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const applyFiltersButton = document.getElementById('apply-filters');
+                        const resetFiltersButton = document.getElementById('reset-filters');
+                        const searchBox = document.getElementById('search-box');
+
+                        // Apply filters when button is clicked
+                        applyFiltersButton.addEventListener('click', function() {
+                            applyFilters();
+                        });
+
+                        // Reset filters when button is clicked
+                        resetFiltersButton.addEventListener('click', function() {
+                            resetFilters();
+                        });
+
+                        // Apply filters when search box is typed in
+                        searchBox.addEventListener('input', function() {
+                            applyFilters();
+                        });
+
+                        function applyFilters() {
+                            // Get selected browsers
+                            const selectedBrowsers = Array.from(
+                                document.querySelectorAll('#browser-filters input:checked')
+                            ).map(input => input.value);
+
+                            // Get selected screen sizes
+                            const selectedSizes = Array.from(
+                                document.querySelectorAll('#size-filters input:checked')
+                            ).map(input => input.value);
+
+                            // Get selected tools
+                            const selectedTools = Array.from(
+                                document.querySelectorAll('#tool-filters input:checked')
+                            ).map(input => input.value);
+
+                            // Get selected severities
+                            const selectedSeverities = Array.from(
+                                document.querySelectorAll('#severity-filters input:checked')
+                            ).map(input => input.value);
+
+                            // Get other options
+                            const showOnlyIssues = document.querySelector('#show-filters input[value="issues_only"]').checked;
+                            const highlightDifferences = document.querySelector('#show-filters input[value="highlight_differences"]').checked;
+
+                            // Get search text
+                            const searchText = searchBox.value.toLowerCase();
+
+                            // Filter browser cards
+                            document.querySelectorAll('.comparison-card').forEach(card => {
+                                const browser = card.getAttribute('data-browser');
+                                card.classList.toggle('filtered-out', !selectedBrowsers.includes(browser));
+                            });
+
+                            // Filter table cells
+                            document.querySelectorAll('.comparison-table td[data-browser]').forEach(cell => {
+                                const browser = cell.getAttribute('data-browser');
+                                cell.classList.toggle('filtered-out', !selectedBrowsers.includes(browser));
+                            });
+
+                            // Filter table rows
+                            document.querySelectorAll('.comparison-table tr[data-screen-size]').forEach(row => {
+                                const size = row.getAttribute('data-screen-size');
+                                row.classList.toggle('filtered-out', !selectedSizes.includes(size));
+                            });
+
+                            // Filter screen size sections
+                            document.querySelectorAll('.screen-size-section').forEach(section => {
+                                const size = section.getAttribute('data-screen-size');
+                                section.classList.toggle('filtered-out', !selectedSizes.includes(size));
+                            });
+
+                            // Filter tool sections
+                            document.querySelectorAll('.tool-section').forEach(section => {
+                                const tool = section.getAttribute('data-tool');
+                                section.classList.toggle('filtered-out', !selectedTools.includes(tool));
+                            });
+
+                            // Filter issues by severity
+                            document.querySelectorAll('.issue-item').forEach(item => {
+                                const severity = item.getAttribute('data-severity');
+                                item.classList.toggle('filtered-out', !selectedSeverities.includes(severity));
+                            });
+
+                            // Apply text search
+                            if (searchText) {
+                                document.querySelectorAll('.issue-item').forEach(item => {
+                                    const text = item.textContent.toLowerCase();
+                                    const matchesSearch = text.includes(searchText);
+
+                                    if (!matchesSearch) {
+                                        item.classList.add('filtered-out');
+                                    }
+                                });
+                            }
+
+                            // Apply highlight differences
+                            document.querySelectorAll('.highlight').forEach(element => {
+                                element.style.backgroundColor = highlightDifferences ? '#ffffcc' : 'transparent';
+                            });
+
+                            // Show only pages with issues
+                            if (showOnlyIssues) {
+                                document.querySelectorAll('.url-section').forEach(section => {
+                                    const hasVisibleIssues = section.querySelector('.error-count:not(.filtered-out)');
+                                    section.classList.toggle('filtered-out', !hasVisibleIssues);
+                                });
+                            } else {
+                                document.querySelectorAll('.url-section').forEach(section => {
+                                    section.classList.remove('filtered-out');
+                                });
+                            }
+                        }
+
+                        function resetFilters() {
+                            // Check all checkboxes
+                            document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
+                                if (checkbox.value === 'issues_only') {
+                                    checkbox.checked = false;
+                                } else {
+                                    checkbox.checked = true;
+                                }
+                            });
+
+                            // Clear search box
+                            searchBox.value = '';
+
+                            // Apply filters
+                            applyFilters();
+                        }
+                    });
                 </script>
             </body>
             </html>
