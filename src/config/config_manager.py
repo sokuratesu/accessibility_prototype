@@ -327,10 +327,25 @@ class ConfigManager:
         Returns:
             dict: Browser settings
         """
-        return self.config.get('browser_settings', {
-            'screen_sizes': [],
-            'browsers': []
-        })
+        browser_settings = self.config.get('browser_settings', {})
+
+        # Ensure default values if fields are missing
+        if 'screen_sizes' not in browser_settings:
+            browser_settings['screen_sizes'] = [
+                {"name": "Mobile", "width": 375, "height": 667, "enabled": True},
+                {"name": "Tablet", "width": 768, "height": 1024, "enabled": True},
+                {"name": "Desktop", "width": 1366, "height": 768, "enabled": True}
+            ]
+
+        if 'browsers' not in browser_settings:
+            browser_settings['browsers'] = [
+                {"name": "Chrome", "enabled": True},
+                {"name": "Firefox", "enabled": False},
+                {"name": "Edge", "enabled": False},
+                {"name": "Safari", "enabled": False}
+            ]
+
+        return browser_settings
 
     def update_browser_settings(self, settings: dict):
         """Update browser and screen size settings.

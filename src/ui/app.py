@@ -15,6 +15,7 @@ import logging
 from ..core.test_orchestrator import AccessibilityTestOrchestrator
 from ..config.config_manager import ConfigManager
 from ..utils.crawler import WebsiteCrawler
+from .browser_testing_helper import BrowserTestingManager, ScreenSize
 
 
 class AccessibilityTesterUI:
@@ -354,9 +355,14 @@ class AccessibilityTesterUI:
 
     def setup_ui(self):
         """Arrange UI components."""
-        # Create browser and screen size controls if not already created
+        print("Setting up UI components")  # Debug print
+
+        # Create browser and screen size controls
         if self.browser_screen_container is None:
+            print("Creating browser screen controls")  # Debug print
             self.browser_screen_container = self.create_browser_screen_controls()
+        else:
+            print("Browser screen controls already exist")  # Debug print
 
         self.page.add(
             ft.Text("Accessibility Tester", size=24, weight=ft.FontWeight.BOLD),
@@ -369,6 +375,10 @@ class AccessibilityTesterUI:
             self.buttons_row,
             self.results_container
         )
+
+        print("UI components added to page")  # Debug print
+        self.page.update()
+        print("Page updated")  # Debug print
 
     def set_orchestrator(self, orchestrator):
         """Set the test orchestrator.
@@ -1140,6 +1150,8 @@ class AccessibilityTesterUI:
         # Load browser settings from config
         browser_settings = self.config_manager.get_browser_settings()
 
+        print(f"Browser settings: {browser_settings}")  # Debug print
+
         # Browser selection section
         browser_heading = ft.Text("Browser Settings:", size=16, weight=ft.FontWeight.BOLD)
 
@@ -1155,7 +1167,13 @@ class AccessibilityTesterUI:
             {"name": "Safari", "enabled": False}
         ]
 
-        browsers = browser_settings.get("browsers", default_browsers)
+        # Always ensure we have browsers to display by using default if list is empty
+        browsers = browser_settings.get("browsers", [])
+        if not browsers:  # If browsers list is empty, use defaults
+            browsers = default_browsers
+            print("Using default browsers list as config is empty")
+
+        print(f"Browsers to display: {browsers}")  # Debug print
 
         for browser in browsers:
             browser_name = browser.get("name")
@@ -1165,6 +1183,7 @@ class AccessibilityTesterUI:
             )
             self.browser_checkboxes[browser_name] = checkbox
             browser_list.controls.append(checkbox)
+            print(f"Added checkbox for {browser_name}")  # Debug print
 
         # Screen size selection section
         screen_size_heading = ft.Text("Screen Sizes:", size=16, weight=ft.FontWeight.BOLD)
@@ -1180,7 +1199,13 @@ class AccessibilityTesterUI:
             {"name": "Desktop", "width": 1366, "height": 768, "enabled": True}
         ]
 
-        screen_sizes = browser_settings.get("screen_sizes", default_sizes)
+        # Always ensure we have screen sizes to display by using default if list is empty
+        screen_sizes = browser_settings.get("screen_sizes", [])
+        if not screen_sizes:  # If screen_sizes list is empty, use defaults
+            screen_sizes = default_sizes
+            print("Using default screen sizes list as config is empty")
+
+        print(f"Screen sizes to display: {screen_sizes}")  # Debug print
 
         for size in screen_sizes:
             size_row = ft.Row([
@@ -1210,6 +1235,7 @@ class AccessibilityTesterUI:
             })
 
             screen_size_list.controls.append(size_row)
+            print(f"Added controls for screen size {size.get('name')}")  # Debug print
 
         # Add button to add new screen size
         add_size_button = ft.ElevatedButton(
@@ -1218,8 +1244,8 @@ class AccessibilityTesterUI:
             on_click=self.add_custom_screen_size
         )
 
-        # Combine all controls
-        return ft.Container(
+        # Create and return the container
+        browser_screen_container = ft.Container(
             content=ft.Column([
                 browser_heading,
                 browser_list,
@@ -1233,6 +1259,11 @@ class AccessibilityTesterUI:
             border_radius=5,
             margin=ft.margin.only(top=20)
         )
+
+        print(f"Created browser screen container with {len(browser_list.controls)} browser checkboxes")
+        print(f"Created browser screen container with {len(screen_size_list.controls)} screen size rows")
+
+        return browser_screen_container
 
     def add_custom_screen_size(self, e):
         """Add a new custom screen size."""
