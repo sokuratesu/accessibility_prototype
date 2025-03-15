@@ -2,8 +2,10 @@
 UI module for the Accessibility Tester application.
 Provides a graphical user interface using Flet.
 """
-
+from datetime import datetime
 import os
+import uuid
+
 import flet as ft
 import subprocess
 import platform
@@ -33,6 +35,10 @@ class AccessibilityTesterUI:
         self.create_tool_selection()
         self.create_japanese_controls()
         self.create_crawl_options()
+
+        # Create browser and screen size controls
+        self.browser_screen_container = None  # Will be created later
+
         self.create_action_buttons()
         self.create_results_container()
         self.create_page_selection_dialog()
@@ -348,6 +354,10 @@ class AccessibilityTesterUI:
 
     def setup_ui(self):
         """Arrange UI components."""
+        # Create browser and screen size controls if not already created
+        if self.browser_screen_container is None:
+            self.browser_screen_container = self.create_browser_screen_controls()
+
         self.page.add(
             ft.Text("Accessibility Tester", size=24, weight=ft.FontWeight.BOLD),
             self.url_input,
@@ -355,6 +365,7 @@ class AccessibilityTesterUI:
             self.japanese_checkbox,
             self.japanese_container,
             self.crawl_container,
+            self.browser_screen_container,  # Add the new controls
             self.buttons_row,
             self.results_container
         )
@@ -497,8 +508,297 @@ class AccessibilityTesterUI:
                 self.show_snackbar(f"Error crawling website: {str(e)}")
                 urls_to_test = [url]
 
+        # Get enabled browsers and screen sizes
+        enabled_browsers = self.get_enabled_browsers()
+        if not enabled_browsers:
+            self.show_snackbar("Please select at least one browser")
+            return
+
+        enabled_screen_sizes = self.get_enabled_screen_sizes()
+        if not enabled_screen_sizes:
+            self.show_snackbar("Please select at least one screen size")
+            return
+
+        # Convert screen sizes to the format expected by the orchestrator
+        screen_sizes = [
+            (size["name"], size["width"], size["height"])
+            for size in enabled_screen_sizes
+        ]
+
+        # Save browser settings
+        self.save_browser_settings()
+
         # If not crawling, proceed with direct testing
-        self._execute_tests(urls_to_test, selected_tools)
+        # self._execute_tests(urls_to_test, selected_tools)
+        self._execute_multi_browser_tests(urls_to_test, selected_tools, enabled_browsers, screen_sizes)
+
+    def _execute_multi_browser_tests(self, urls, selected_tools, browsers, screen_sizes):
+        """Execute tests across multiple browsers and screen sizes."""
+        # Update status
+        self.status_text.value = f"Testing {len(urls)} pages across {len(browsers)} browsers and {len(screen_sizes)} screen sizes..."
+        self.page.update()
+
+        try:
+            base_dir = os.path.join(os.getcwd(), "Reports")
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            test_id = f"report_{timestamp}_{uuid.uuid4().hex[:8]}"
+            main_test_dir = os.path.join(base_dir, test_id)
+            os.makedirs(main_test_dir, exist_ok=True)
+
+            # Store the report directory for "Open Reports" button
+            self.last_report_dir = main_test_dir
+
+            all_results = {
+                "timestamp": datetime.now().strftime("%Y/%m/%d %H:%M:%S"),
+                "tools": selected_tools,
+                "browsers": browsers,
+                "screen_sizes": screen_sizes,
+                "urls": {},
+            }
+
+            for url in urls:
+                url_dir = os.path.join(main_test_dir, url
+                                       .replace('https://', '')
+                                       .replace('http://', '')
+                                       .replace('/', '_')
+                                       .replace(':', '_'))
+                os.makedirs(url_dir, exist_ok=True)
+
+                # Use multi-browser testing
+                all_results["urls"][url] = self.orchestrator.run_multi_browser_tests(
+                    url,
+                    selected_tools,
+                    screen_sizes,
+                    browsers,
+                    test_dir=url_dir,
+                    w3c_subtests=self.w3c_enabled_subtests if hasattr(self, 'w3c_enabled_subtests') else None
+                )
+
+            # Generate enhanced summary report with browser comparison
+            summary_path = self._generate_enhanced_summary_report(all_results, main_test_dir)
+            self.logger.info(f"Saved Enhanced Summary Report to '{summary_path}'")
+
+            # Display completion message
+            self.status_text.value = "Testing complete"
+            self.results_text.value = (
+                f"Tested {len(urls)} pages with {len(selected_tools)} tools\n"
+                f"Across {len(browsers)} browsers and {len(screen_sizes)} screen sizes"
+            )
+
+            # Show the path to the reports
+            self.results_text.value += f"\n\nReports saved in: {main_test_dir}"
+            # Show the "Open Reports" button
+            self.open_reports_button.visible = True
+
+        except Exception as e:
+            self.logger.error(f"Error running tests: {str(e)}")
+            self.status_text.value = f"Error: {str(e)}"
+
+        # Reset UI state
+        self.progress_bar.visible = False
+        self.test_button.disabled = False
+        self.cancel_button.visible = False
+        self.page.update()
+
+    def _generate_enhanced_summary_report(self, all_results, main_test_dir):
+        """Generate an enhanced summary report that compares results across browsers and screen sizes.
+
+        Args:
+            all_results (dict): All test results
+            main_test_dir (str): Main test directory
+
+        Returns:
+            str: Path to the generated report
+        """
+        try:
+            from jinja2 import Template
+
+            template_str = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Enhanced Accessibility Report</title>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    h1, h2, h3, h4 { color: #2a4365; }
+                    .summary { background-color: #f8f9fa; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+                    table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                    th { background-color: #f2f2f2; }
+                    .browser-nav { display: flex; gap: 10px; margin: 20px 0; }
+                    .browser-tab { padding: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; }
+                    .browser-tab.active { background-color: #e9ecef; font-weight: bold; }
+                    .browser-content { display: none; }
+                    .browser-content.active { display: block; }
+                    .size-nav { display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0; }
+                    .size-tab { padding: 8px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; }
+                    .size-tab.active { background-color: #e9ecef; font-weight: bold; }
+                    .size-content { display: none; }
+                    .size-content.active { display: block; }
+                    .tool-header { background-color: #f8f9fa; padding: 10px; margin: 15px 0 10px; border-radius: 5px; }
+                    .issue-list { margin-left: 20px; }
+                    .issue-item { margin-bottom: 8px; padding-left: 10px; border-left: 3px solid #ddd; }
+                    .status-good { color: #28a745; }
+                    .status-warning { color: #ffc107; }
+                    .status-error { color: #dc3545; }
+                    .comparison-table th { position: sticky; top: 0; background-color: #f2f2f2; }
+                    .url-section { margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+                    .issue-count { font-weight: bold; }
+                    .error-count { color: #dc3545; }
+                    .warning-count { color: #ffc107; }
+                    .notice-count { color: #17a2b8; }
+                    .comparison-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; margin: 20px 0; }
+                    .comparison-card { border: 1px solid #ddd; border-radius: 5px; padding: 15px; }
+                    .card-header { font-weight: bold; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+                    .toggle-button { margin-top: 10px; padding: 5px 10px; background-color: #f2f2f2; border: none; border-radius: 3px; cursor: pointer; }
+                    .toggle-button:hover { background-color: #e9ecef; }
+                    @media (max-width: 768px) {
+                        .comparison-grid { grid-template-columns: 1fr; }
+                    }
+                </style>
+            </head>
+            <body>
+                <h1>Enhanced Accessibility Report</h1>
+
+                <div class="summary">
+                    <h2>Summary</h2>
+                    <p><strong>Date:</strong> {{ results.timestamp }}</p>
+                    <p><strong>URLs Tested:</strong> {{ results.urls|length }}</p>
+                    <p><strong>Browsers:</strong> {{ results.browsers|join(', ') }}</p>
+                    <p><strong>Screen Sizes:</strong> 
+                        {% for size in results.screen_sizes %}
+                            {{ size[0] }} ({{ size[1] }}×{{ size[2] }}px){% if not loop.last %}, {% endif %}
+                        {% endfor %}
+                    </p>
+                    <p><strong>Testing Tools:</strong> {{ results.tools|join(', ') }}</p>
+                </div>
+
+                <h2>Cross-Browser Comparison</h2>
+
+                {% for url, url_data in results.urls.items() %}
+                    <div class="url-section">
+                        <h3>{{ url }}</h3>
+
+                        <h4>Browser Comparison</h4>
+                        <div class="comparison-grid">
+                            {% for browser, browser_data in url_data.browsers.items() %}
+                                <div class="comparison-card">
+                                    <div class="card-header">{{ browser }}</div>
+
+                                    {% set total_issues = [] %}
+                                    {% for size_key, size_data in browser_data.screen_sizes.items() %}
+                                        {% for tool, tool_data in size_data.tools.items() %}
+                                            {% if tool == 'axe' and tool_data.violations %}
+                                                {% set _ = total_issues.extend(tool_data.violations) %}
+                                            {% elif tool == 'wave' and tool_data.categories.error %}
+                                                {% set _ = total_issues.append(1) for _ in range(tool_data.categories.error.count) %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endfor %}
+
+                                    <p class="issue-count {% if total_issues|length > 0 %}error-count{% endif %}">
+                                        Issues found: {{ total_issues|length }}
+                                    </p>
+
+                                    <button class="toggle-button" onclick="toggleDetails('{{ url|replace('.', '_') }}_{{ browser }}')">
+                                        View Details
+                                    </button>
+
+                                    <div id="{{ url|replace('.', '_') }}_{{ browser }}" style="display: none; margin-top: 10px;">
+                                        {% for size_key, size_data in browser_data.screen_sizes.items() %}
+                                            <div style="margin-top: 10px; padding-top: 5px; border-top: 1px dashed #ddd;">
+                                                <h5>{{ size_key }}</h5>
+                                                {% for tool, tool_data in size_data.tools.items() %}
+                                                    <div style="margin-left: 10px;">
+                                                        <strong>{{ tool }}:</strong>
+
+                                                        {% if tool == 'axe' %}
+                                                            {{ tool_data.violations|length }} violations
+                                                        {% elif tool == 'wave' %}
+                                                            {{ tool_data.categories.error.count }} errors
+                                                        {% else %}
+                                                            {% if tool_data.error %}
+                                                                Error: {{ tool_data.error }}
+                                                            {% else %}
+                                                                Completed
+                                                            {% endif %}
+                                                        {% endif %}
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <h4>Screen Size Comparison</h4>
+                        <table class="comparison-table">
+                            <tr>
+                                <th>Screen Size</th>
+                                {% for browser in results.browsers %}
+                                    <th>{{ browser }}</th>
+                                {% endfor %}
+                            </tr>
+                            {% for size_name, width, height in results.screen_sizes %}
+                                {% set size_key = size_name + '_' + width|string + 'x' + height|string %}
+                                <tr>
+                                    <td>{{ size_name }} ({{ width }}×{{ height }})</td>
+                                    {% for browser in results.browsers %}
+                                        <td>
+                                            {% if url_data.browsers[browser] and url_data.browsers[browser].screen_sizes[size_key] %}
+                                                {% set size_data = url_data.browsers[browser].screen_sizes[size_key] %}
+                                                {% set issue_count = 0 %}
+
+                                                {% for tool, tool_data in size_data.tools.items() %}
+                                                    {% if tool == 'axe' and tool_data.violations %}
+                                                        {% set issue_count = issue_count + tool_data.violations|length %}
+                                                    {% elif tool == 'wave' and tool_data.categories.error %}
+                                                        {% set issue_count = issue_count + tool_data.categories.error.count %}
+                                                    {% endif %}
+                                                {% endfor %}
+
+                                                <span class="{% if issue_count > 10 %}status-error{% elif issue_count > 0 %}status-warning{% else %}status-good{% endif %}">
+                                                    {{ issue_count }} issues
+                                                </span>
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                {% endfor %}
+
+                <script>
+                    function toggleDetails(id) {
+                        const element = document.getElementById(id);
+                        if (element.style.display === "none") {
+                            element.style.display = "block";
+                        } else {
+                            element.style.display = "none";
+                        }
+                    }
+                </script>
+            </body>
+            </html>
+            """
+
+            html_report = Template(template_str).render(results=all_results)
+
+            # Save HTML report
+            output_path = os.path.join(main_test_dir, "enhanced_summary.html")
+            with open(output_path, 'w', encoding='utf-8') as f:
+                f.write(html_report)
+
+            return output_path
+        except Exception as e:
+            self.logger.error(f"Error generating enhanced summary report: {str(e)}")
+            return None
 
     def show_page_selection_dialog(self, urls, selected_tools):
         """Show dialog to select which pages to test using overlay.
@@ -817,3 +1117,245 @@ class AccessibilityTesterUI:
         self.page.overlay.append(settings_overlay)
         print("Settings overlay added")  # Debug print
         self.page.update()
+
+    def toggle_japanese_testing(self, visible=False):
+        """Toggle visibility of Japanese testing options.
+
+        Args:
+            visible (bool): Whether to show Japanese testing options
+        """
+        # Hide Japanese options in UI
+        self.japanese_checkbox.visible = visible
+        self.japanese_container.visible = False
+
+        # Update the page
+        self.page.update()
+
+    """
+    Updates to the UI module to support multi-browser and multi-screen size testing.
+    """
+
+    def create_browser_screen_controls(self):
+        """Create browser and screen size controls."""
+        # Load browser settings from config
+        browser_settings = self.config_manager.get_browser_settings()
+
+        # Browser selection section
+        browser_heading = ft.Text("Browser Settings:", size=16, weight=ft.FontWeight.BOLD)
+
+        # Create browser checkboxes
+        self.browser_checkboxes = {}
+        browser_list = ft.Column(spacing=5)
+
+        # Add predefined browsers
+        default_browsers = [
+            {"name": "Chrome", "enabled": True},
+            {"name": "Firefox", "enabled": False},
+            {"name": "Edge", "enabled": False},
+            {"name": "Safari", "enabled": False}
+        ]
+
+        browsers = browser_settings.get("browsers", default_browsers)
+
+        for browser in browsers:
+            browser_name = browser.get("name")
+            checkbox = ft.Checkbox(
+                label=browser_name,
+                value=browser.get("enabled", False)
+            )
+            self.browser_checkboxes[browser_name] = checkbox
+            browser_list.controls.append(checkbox)
+
+        # Screen size selection section
+        screen_size_heading = ft.Text("Screen Sizes:", size=16, weight=ft.FontWeight.BOLD)
+
+        # Create screen size items with width/height inputs
+        self.screen_size_controls = []
+        screen_size_list = ft.Column(spacing=10)
+
+        # Add predefined screen sizes
+        default_sizes = [
+            {"name": "Mobile", "width": 375, "height": 667, "enabled": True},
+            {"name": "Tablet", "width": 768, "height": 1024, "enabled": True},
+            {"name": "Desktop", "width": 1366, "height": 768, "enabled": True}
+        ]
+
+        screen_sizes = browser_settings.get("screen_sizes", default_sizes)
+
+        for size in screen_sizes:
+            size_row = ft.Row([
+                ft.Checkbox(
+                    label=size.get("name", "Unknown"),
+                    value=size.get("enabled", True)
+                ),
+                ft.Text("W:"),
+                ft.TextField(
+                    value=str(size.get("width", 1366)),
+                    width=70,
+                    keyboard_type="number"
+                ),
+                ft.Text("H:"),
+                ft.TextField(
+                    value=str(size.get("height", 768)),
+                    width=70,
+                    keyboard_type="number"
+                )
+            ], alignment=ft.MainAxisAlignment.START, spacing=5)
+
+            self.screen_size_controls.append({
+                "name": size.get("name"),
+                "checkbox": size_row.controls[0],
+                "width": size_row.controls[2],
+                "height": size_row.controls[4]
+            })
+
+            screen_size_list.controls.append(size_row)
+
+        # Add button to add new screen size
+        add_size_button = ft.ElevatedButton(
+            text="Add Custom Size",
+            icon=ft.icons.ADD,
+            on_click=self.add_custom_screen_size
+        )
+
+        # Combine all controls
+        return ft.Container(
+            content=ft.Column([
+                browser_heading,
+                browser_list,
+                ft.Divider(),
+                screen_size_heading,
+                screen_size_list,
+                add_size_button
+            ]),
+            padding=10,
+            border=ft.border.all(1, ft.colors.GREY_400),
+            border_radius=5,
+            margin=ft.margin.only(top=20)
+        )
+
+    def add_custom_screen_size(self, e):
+        """Add a new custom screen size."""
+        # Create dialog for adding a new size
+        name_input = ft.TextField(label="Name", hint_text="Custom Size")
+        width_input = ft.TextField(label="Width", value="1024", keyboard_type="number")
+        height_input = ft.TextField(label="Height", value="768", keyboard_type="number")
+
+        def add_size(e):
+            """Add the new size and close the dialog."""
+            try:
+                # Validate inputs
+                name = name_input.value.strip()
+                width = int(width_input.value)
+                height = int(height_input.value)
+
+                if not name:
+                    self.show_snackbar("Name is required")
+                    return
+
+                if width <= 0 or height <= 0:
+                    self.show_snackbar("Width and height must be positive")
+                    return
+
+                # Create new size row
+                size_row = ft.Row([
+                    ft.Checkbox(
+                        label=name,
+                        value=True
+                    ),
+                    ft.Text("W:"),
+                    ft.TextField(
+                        value=str(width),
+                        width=70,
+                        keyboard_type="number"
+                    ),
+                    ft.Text("H:"),
+                    ft.TextField(
+                        value=str(height),
+                        width=70,
+                        keyboard_type="number"
+                    )
+                ], alignment=ft.MainAxisAlignment.START, spacing=5)
+
+                # Add to controls
+                self.screen_size_controls.append({
+                    "name": name,
+                    "checkbox": size_row.controls[0],
+                    "width": size_row.controls[2],
+                    "height": size_row.controls[4]
+                })
+
+                # Add to screen size list
+                screen_size_list = self.browser_screen_container.content.controls[4]
+                screen_size_list.controls.append(size_row)
+
+                # Hide dialog
+                dialog.open = False
+                self.page.update()
+
+            except ValueError:
+                self.show_snackbar("Width and height must be numbers")
+
+        # Create dialog
+        dialog = ft.AlertDialog(
+            title=ft.Text("Add Custom Screen Size"),
+            content=ft.Column([
+                name_input,
+                width_input,
+                height_input
+            ], spacing=10, tight=True),
+            actions=[
+                ft.TextButton("Cancel", on_click=lambda e: setattr(dialog, "open", False)),
+                ft.TextButton("Add", on_click=add_size)
+            ],
+            actions_alignment=ft.MainAxisAlignment.END
+        )
+
+        # Show dialog
+        self.page.dialog = dialog
+        dialog.open = True
+        self.page.update()
+
+    def get_enabled_browsers(self):
+        """Get list of enabled browsers."""
+        return [
+            name for name, checkbox in self.browser_checkboxes.items()
+            if checkbox.value
+        ]
+
+    def get_enabled_screen_sizes(self):
+        """Get list of enabled screen sizes."""
+        return [
+            {
+                "name": control["name"],
+                "width": int(control["width"].value),
+                "height": int(control["height"].value)
+            }
+            for control in self.screen_size_controls
+            if control["checkbox"].value
+        ]
+
+    def save_browser_settings(self):
+        """Save browser and screen size settings to config."""
+        # Get current settings
+        browsers = [
+            {"name": name, "enabled": checkbox.value}
+            for name, checkbox in self.browser_checkboxes.items()
+        ]
+
+        screen_sizes = [
+            {
+                "name": control["name"],
+                "width": int(control["width"].value),
+                "height": int(control["height"].value),
+                "enabled": control["checkbox"].value
+            }
+            for control in self.screen_size_controls
+        ]
+
+        # Update config
+        self.config_manager.update_browser_settings({
+            "browsers": browsers,
+            "screen_sizes": screen_sizes
+        })
+

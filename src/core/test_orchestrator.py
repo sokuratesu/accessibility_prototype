@@ -228,3 +228,177 @@ class AccessibilityTestOrchestrator:
 
         return all_results
 
+    """
+    Updates to the TestOrchestrator to support multi-browser and multi-screen size testing.
+    """
+
+    def run_multi_browser_tests(self, url, tester_ids=None, screen_sizes=None, browsers=None, test_dir=None,
+                                w3c_subtests=None):
+        """Run accessibility tests across multiple browsers and screen sizes.
+
+        Args:
+            url (str): The URL to test
+            tester_ids (list, optional): List of tester IDs to use
+            screen_sizes (list, optional): List of screen sizes to test
+            browsers (list, optional): List of browsers to test
+            test_dir (str, optional): Directory to save test results
+            w3c_subtests (list, optional): List of W3C sub-tests to run
+
+        Returns:
+            dict: Test results for each browser, screen size, and tester
+        """
+        from ..ui.browser_testing_helper import BrowserTestingManager, ScreenSize
+
+        # Create test directory if not provided
+        if test_dir is None:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            base_dir = os.path.join(os.getcwd(), "reports")
+            test_id = f"{timestamp}_{uuid.uuid4().hex[:8]}"
+            test_dir = os.path.join(base_dir, test_id)
+
+        os.makedirs(test_dir, exist_ok=True)
+
+        # At the beginning of the method, right after creating the test_dir
+        screenshots_dir = os.path.join(test_dir, "screenshots")
+        os.makedirs(screenshots_dir, exist_ok=True)
+
+        # Determine which testers to use
+        if tester_ids is None:
+            tester_ids = list(self.testers.keys())
+        else:
+            # Filter to only registered testers
+            tester_ids = [tid for tid in tester_ids if tid in self.testers]
+
+        if not tester_ids:
+            self.logger.warning("No valid testers specified")
+            return {}
+
+        # Initialize browser testing manager
+        browser_manager = BrowserTestingManager()
+
+        # Use provided screen sizes or get from config
+        if screen_sizes is None:
+            screen_sizes = [
+                (size.name, size.width, size.height)
+                for size in browser_manager.get_enabled_screen_sizes()
+            ]
+
+        # Use provided browsers or get from config
+        if browsers is None:
+            browsers = [browser.name for browser in browser_manager.get_enabled_browsers()]
+
+        # Initialize results structure
+        results = {
+            "url": url,
+            "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
+            "test_dir": test_dir,
+            "browsers": {}
+        }
+
+        # Run tests for each browser and screen size
+        for browser_name in browsers:
+            results["browsers"][browser_name] = {
+                "screen_sizes": {}
+            }
+
+            for size_name, width, height in screen_sizes:
+                size_key = f"{size_name}_{width}x{height}"
+                size_dir = os.path.join(test_dir, browser_name, size_key)
+                os.makedirs(size_dir, exist_ok=True)
+
+                # Create a test driver for this browser
+                driver = browser_manager.create_driver(browser_name)
+                if driver is None:
+                    results["browsers"][browser_name]["screen_sizes"][size_key] = {
+                        "error": f"Failed to initialize {browser_name} browser"
+                    }
+                    continue
+
+                try:
+                    # Set window size
+                    screen_size = ScreenSize(size_name, width, height)
+                    browser_manager.resize_browser(driver, screen_size)
+
+                    # Store driver for testers that need it
+                    self.browser_driver = driver
+
+                    # After setting up the driver for each browser and screen size
+                    # Take a screenshot of the initial page load
+                    screenshot_path = browser_manager.capture_screenshot(
+                        driver,
+                        screen_size,
+                        os.path.join(screenshots_dir, browser_name),
+                        f"initial_{url.replace('://', '_').replace('/', '_')}"
+                    )
+                    if screenshot_path:
+                        results["browsers"][browser_name]["screen_sizes"][size_key]["screenshot"] = screenshot_path
+
+                    # Track results for this size
+                    size_results = {}
+
+                    # Run each tester
+                    for tester_id in tester_ids:
+                        try:
+                            self.logger.info(f"Running {tester_id} on {url} in {browser_name} at {size_key}")
+
+                            tester = self.testers[tester_id]
+
+                            # For testers that need the driver, pass it
+                            if hasattr(tester, 'set_driver') and callable(getattr(tester, 'set_driver')):
+                                tester.set_driver(driver)
+
+                            # Special handling for W3C tester with sub-tests
+                            if tester_id == "w3c_tools" and w3c_subtests is not None:
+                                test_result = tester.test_accessibility(
+                                    url,
+                                    size_dir,
+                                    enabled_tests=w3c_subtests
+                                )
+                            else:
+                                # Run other testers normally
+                                test_result = tester.test_accessibility(url, size_dir)
+
+                            # Generate reports
+                            tester_output_dir = os.path.join(size_dir, tester_id)
+                            os.makedirs(tester_output_dir, exist_ok=True)
+                            report_paths = tester.generate_report(test_result, tester_output_dir)
+
+                            if report_paths:
+                                test_result["reports"] = report_paths
+
+                            # Store results
+                            size_results[tester_id] = test_result
+
+                        except Exception as e:
+                            error_message = f"Error running {tester_id} in {browser_name} at {size_key}: {str(e)}"
+                            self.logger.error(error_message)
+                            size_results[tester_id] = {
+                                "tool": tester_id,
+                                "url": url,
+                                "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
+                                "error": error_message,
+                                "test_dir": size_dir
+                            }
+
+                    # Store results for this size
+                    results["browsers"][browser_name]["screen_sizes"][size_key] = {
+                        "tools": size_results
+                    }
+
+                except Exception as e:
+                    self.logger.error(f"Error in {browser_name} at {size_key}: {str(e)}")
+                    results["browsers"][browser_name]["screen_sizes"][size_key] = {
+                        "error": str(e)
+                    }
+
+                finally:
+                    driver.quit()
+                    self.browser_driver = None
+
+        # Save all results
+        all_results_path = os.path.join(test_dir, "all_results.json")
+        with open(all_results_path, 'w', encoding='utf-8') as f:
+            json.dump(results, f, indent=2)
+
+        return results
+

@@ -33,8 +33,14 @@ class W3CTester(BaseAccessibilityTester):
         self.driver = None
         self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-        # Add this line to store enabled tests
-        self.enabled_tests = None
+        # Default enabled tests
+        self.enabled_tests = [
+            "html_validator",
+            "css_validator",
+            "link_checker",
+            "aria_validator",
+            "dom_accessibility"
+        ]
 
         # Create lib directory if it doesn't exist
         lib_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'data', 'w3c_tools')
@@ -220,6 +226,13 @@ return validateARIA();
                 self.output_dir = os.path.join(os.getcwd(), "Reports", f"w3c_test_{self.timestamp}")
                 os.makedirs(self.output_dir, exist_ok=True)
 
+            # Update enabled_tests if provided
+            if enabled_tests is not None:
+                self.enabled_tests = enabled_tests
+                self.logger.info(f"Using provided enabled tests: {self.enabled_tests}")
+            else:
+                self.logger.info(f"Using default enabled tests: {self.enabled_tests}")
+
             self.driver = self._setup_driver()
 
             results = {
@@ -230,16 +243,8 @@ return validateARIA();
                 "tests": {}
             }
 
-            # Use self.enabled_tests to determine which tests to run
-            # enabled_tests = self.enabled_tests
-
-            # If no specific tests are enabled, run all tests
-            if enabled_tests is None:
-                enabled_tests = ["html_validator", "css_validator", "link_checker",
-                                 "nu_validator", "aria_validator", "dom_accessibility"]
-
             # Run HTML Validator
-            if "html_validator" in enabled_tests:
+            if "html_validator" in self.enabled_tests:
                 try:
                     results["tests"]["html_validator"] = self._run_html_validator(url)
                 except Exception as e:
@@ -247,7 +252,7 @@ return validateARIA();
                     results["tests"]["html_validator"] = {"error": str(e)}
 
             # Run CSS Validator
-            if "css_validator" in enabled_tests:
+            if "css_validator" in self.enabled_tests:
                 try:
                     results["tests"]["css_validator"] = self._run_css_validator(url)
                 except Exception as e:
@@ -255,7 +260,7 @@ return validateARIA();
                     results["tests"]["css_validator"] = {"error": str(e)}
 
             # Run Link Checker
-            if "link_checker" in enabled_tests:
+            if "link_checker" in self.enabled_tests:
                 try:
                     results["tests"]["link_checker"] = self._run_link_checker(url)
                 except Exception as e:
@@ -263,7 +268,7 @@ return validateARIA();
                     results["tests"]["link_checker"] = {"error": str(e)}
 
             # Run Nu HTML Checker (if available)
-            if "nu_validator" in enabled_tests:
+            if "nu_validator" in self.enabled_tests:
                 try:
                     results["tests"]["nu_validator"] = self._run_vnu_validator(url)
                 except Exception as e:
@@ -271,7 +276,7 @@ return validateARIA();
                     results["tests"]["nu_validator"] = {"error": str(e)}
 
             # Run ARIA Validator
-            if "aria_validator" in enabled_tests:
+            if "aria_validator" in self.enabled_tests:
                 try:
                     self.driver.get(url)
                     time.sleep(3)  # Allow page to load
@@ -281,7 +286,7 @@ return validateARIA();
                     results["tests"]["aria_validator"] = {"error": str(e)}
 
             # Run DOMAccessibility Test
-            if "dom_accessibility" in enabled_tests:
+            if "dom_accessibility" in self.enabled_tests:
                 try:
                     results["tests"]["dom_accessibility"] = self._run_dom_accessibility_test()
                 except Exception as e:
