@@ -327,12 +327,6 @@ class ConfigManager:
         Returns:
             dict: Browser settings
         """
-
-        """Get browser and screen size settings.
-
-            Returns:
-                dict: Browser settings
-            """
         browser_settings = self.config.get('browser_settings', {})
 
         # Ensure default values if fields are missing
@@ -352,7 +346,6 @@ class ConfigManager:
             ]
 
         return browser_settings
-
 
     def update_browser_settings(self, settings: dict):
         """Update browser and screen size settings.
