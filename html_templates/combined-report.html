@@ -33,7 +33,7 @@
                     {"class": "inapplicable", "name": "Inapplicable", "count": results["inapplicable"]|length }
                 ], "filterable " + tool) }}
             {% elif tool == 'wcag22' %}
-                {{ issue_container_with_class("WCAG 2.2", [
+                {{ issue_container_with_class("<a href=\"" + results["reports"]["html"] + "\">WCAG 2.2</a>", [
                     {"class": "inapplicable", "name": "Criteria Tested", "count": results.summary.criteria_tested },
                     {"class": "success", "name": "Passed", "count": results.summary.criteria_passed },
                     {"class": "failure", "name": "Failed", "count": results.summary.criteria_failed },
