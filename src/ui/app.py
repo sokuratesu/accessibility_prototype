@@ -962,7 +962,6 @@ class AccessibilityTesterUI:
         # Create browser checkboxes
         browser_list = ft.Column(spacing=5)
 
-<<<<<<< HEAD
         # Add predefined browsers
         default_browsers = [
             {"name": "Chrome", "enabled": True},
@@ -978,9 +977,7 @@ class AccessibilityTesterUI:
             print("Using default browsers list as config is empty")
 
         print(f"Browsers to display: {browsers}")  # Debug print
-=======
         browsers = browser_settings["browsers"]
->>>>>>> fa65cc283b8a370a1535cff394ed944f9f075795
 
         for browser in browsers:
             browser_name = browser.get("name")
@@ -990,11 +987,10 @@ class AccessibilityTesterUI:
             )
             self.browser_checkboxes[browser_name] = checkbox
             browser_list.controls.append(checkbox)
-<<<<<<< HEAD
+
             print(f"Added checkbox for {browser_name}")  # Debug print
-=======
+
         print(f"{browser_list.controls}: {len(browser_list.controls)}")
->>>>>>> fa65cc283b8a370a1535cff394ed944f9f075795
 
         # Screen size selection section
         screen_size_heading = ft.Text("Screen Sizes:", size=16, weight=ft.FontWeight.BOLD)
@@ -1002,7 +998,7 @@ class AccessibilityTesterUI:
         # Create screen size items with width/height inputs
         screen_size_list = ft.Column(spacing=10)
 
-<<<<<<< HEAD
+
         # Add predefined screen sizes
         default_sizes = [
             {"name": "Mobile", "width": 375, "height": 667, "enabled": True},
@@ -1017,9 +1013,8 @@ class AccessibilityTesterUI:
             print("Using default screen sizes list as config is empty")
 
         print(f"Screen sizes to display: {screen_sizes}")  # Debug print
-=======
+
         screen_sizes = browser_settings["screen_sizes"]
->>>>>>> fa65cc283b8a370a1535cff394ed944f9f075795
 
         for size in screen_sizes:
             size_row = ft.Row([
