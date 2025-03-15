@@ -4,18 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="92bae063-f94c-4c97-be3e-66f9e235b1ed" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/ui/browser_testing_helper.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/accessibility_prototype.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/accessibility_prototype.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/config/config_manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/config/config_manager.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/core/test_orchestrator.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/core/test_orchestrator.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/testers/pa11y_tester.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/testers/pa11y_tester.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/testers/w3c_tester.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/testers/w3c_tester.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ui/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/ui/app.py" afterDir="false" />
-    </list>
+    <list default="true" id="92bae063-f94c-4c97-be3e-66f9e235b1ed" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
